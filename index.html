@@ -4,287 +4,307 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LoomLayout – window manager for macOS</title>
-<meta name="description" content="LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging, remember where each window belongs for every display setup, and save named layouts. Everything stays on your Mac.">
-<meta name="theme-color" content="#0b0c12">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0c12'/%3E%3Cpath d='M7 10h18M7 16h18M7 22h18' stroke='%23ffb86b' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="description" content="LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging, remember each display setup, and save named layouts. Everything stays on your Mac.">
+<meta name="theme-color" content="#2e3d4f">
+<link rel="icon" href="assets/app-icon.png" type="image/png">
 <style>
+  /* Brand palette, from LoomLayout's identity board (Design.swift) */
   :root {
     color-scheme: dark;
-    --ink: #f3f1ec;
-    --mute: #9a9aa6;
-    --dim: #5d5d6b;
-    --bg: #0b0c12;
-    --panel: #14151d;
-    --panel-2: #1b1d28;
-    --line: rgba(255,255,255,.08);
-    --amber: #ffb86b;
-    --amber-2: #ff8a5b;
-    --teal: #5ee6c8;
-    --violet: #a48bff;
-    --glow: 0 30px 80px -20px rgba(255,138,91,.25);
+    --charcoal: #2e3d4f;
+    --terracotta: #b5613b;
+    --dune: #e8dbc7;
+    --teal: #2e7173;
+    --horizon: #8fb5cf;
+    --sage: #94ae8f;
+    --ink: #f4f1ea;
+    --mute: #a9b4bf;
+    --dim: #6c7a88;
+    --bg: #17212c;
+    --panel: #1f2b38;
+    --panel-2: #26354a;
+    --line: rgba(232,219,199,.10);
+    --accent-grad: linear-gradient(135deg, #2e7173, #8fb5cf);
+    --mac-blue: #0a84ff;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.6 "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     overflow-x: hidden;
   }
-  /* aurora + loom lines backdrop */
   body::before {
     content: ""; position: fixed; inset: -20% -10% auto -10%; height: 90vh; z-index: -2; pointer-events: none;
     background:
-      radial-gradient(40% 50% at 20% 10%, rgba(255,138,91,.22), transparent 70%),
-      radial-gradient(35% 45% at 85% 5%, rgba(94,230,200,.14), transparent 70%),
-      radial-gradient(40% 50% at 60% 30%, rgba(164,139,255,.13), transparent 70%);
-    filter: blur(20px);
-  }
-  body::after {
-    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
-    background-image: repeating-linear-gradient(115deg, transparent 0 46px, rgba(255,255,255,.025) 46px 47px);
+      radial-gradient(40% 50% at 18% 8%, rgba(143,181,207,.20), transparent 70%),
+      radial-gradient(38% 46% at 86% 4%, rgba(46,113,115,.35), transparent 70%),
+      radial-gradient(34% 40% at 60% 36%, rgba(181,97,59,.12), transparent 70%);
+    filter: blur(24px);
   }
   a { color: inherit; }
-  img, svg { display: block; }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
   .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 600;
-    letter-spacing: .14em; text-transform: uppercase; color: var(--amber); margin: 0 0 16px;
+    display: inline-flex; align-items: center; gap: 10px; font-size: .78rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--horizon); margin: 0 0 16px;
   }
-  .eyebrow::before { content: ""; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+  .eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--terracotta); border-radius: 2px; }
   h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -.025em; }
-  h1 { font-size: clamp(2.6rem, 7.4vw, 5.2rem); line-height: .98; }
-  h2 { font-size: clamp(1.9rem, 4.6vw, 3rem); line-height: 1.05; }
-  h3 { font-size: 1.12rem; letter-spacing: -.01em; }
+  h1 { font-size: clamp(2.6rem, 7.2vw, 5rem); line-height: .98; }
+  h2 { font-size: clamp(1.9rem, 4.4vw, 2.9rem); line-height: 1.06; }
+  h3 { font-size: 1.1rem; letter-spacing: -.01em; }
   p { margin: 0; }
-  .grad {
-    background: linear-gradient(100deg, var(--amber) 0%, var(--amber-2) 45%, var(--violet) 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  .grad { background: linear-gradient(100deg, var(--dune) 0%, var(--horizon) 60%, #6fb3b6 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .mute { color: var(--mute); }
   kbd {
     font: 600 .82em/1 ui-monospace, "SF Mono", Menlo, monospace; display: inline-grid; place-items: center;
     min-width: 1.9em; height: 1.9em; padding: 0 .45em; border-radius: 7px; color: var(--ink);
-    background: linear-gradient(#2a2d3b, #1b1d28); border: 1px solid rgba(255,255,255,.12);
-    box-shadow: 0 2px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+    background: linear-gradient(#34465c, #26364a); border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 2px 0 rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10);
   }
 
   /* nav */
-  .nav {
-    position: sticky; top: 0; z-index: 20; backdrop-filter: saturate(160%) blur(14px);
-    background: rgba(11,12,18,.6); border-bottom: 1px solid var(--line);
-  }
-  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
+  .nav { position: sticky; top: 0; z-index: 30; background: rgba(23,33,44,.72); backdrop-filter: saturate(160%) blur(14px); border-bottom: 1px solid var(--line); }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; letter-spacing: -.01em; }
-  .brand svg { width: 26px; height: 26px; }
-  .links { display: flex; gap: 22px; font-size: .92rem; color: var(--mute); }
+  .brand img { width: 30px; height: 30px; border-radius: 8px; }
+  .links { display: flex; gap: 24px; font-size: .92rem; color: var(--mute); }
   .links a { text-decoration: none; }
   .links a:hover { color: var(--ink); }
   .pill {
-    display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 650; font-size: .93rem;
-    color: #15110c; background: linear-gradient(100deg, var(--amber), var(--amber-2));
-    padding: 10px 16px; border-radius: 999px; box-shadow: 0 8px 24px -8px rgba(255,138,91,.6); white-space: nowrap;
+    display: inline-flex; align-items: center; text-decoration: none; font-weight: 650; font-size: .93rem;
+    color: #fff; background: var(--accent-grad); padding: 9px 16px; border-radius: 999px; white-space: nowrap;
+    box-shadow: 0 8px 24px -10px rgba(46,113,115,.9);
   }
-  @media (max-width: 760px) { .links a:not(.pill) { display: none; } }
+  @media (max-width: 760px) { .links a { display: none; } }
 
   /* hero */
-  .hero { padding: 84px 0 40px; text-align: left; }
-  .hero-grid { display: grid; gap: 40px; align-items: end; }
-  .lead { font-size: clamp(1.1rem, 2.2vw, 1.3rem); color: var(--mute); max-width: 36ch; margin-top: 22px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+  .hero { padding: 80px 0 30px; }
+  .hero-top { display: grid; gap: 28px; grid-template-columns: 1.15fr 1fr; align-items: end; }
+  .lead { font-size: clamp(1.1rem, 2.1vw, 1.28rem); color: var(--mute); max-width: 40ch; margin-top: 20px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
   .btn {
     display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650;
-    padding: 15px 24px; border-radius: 14px; transition: transform .2s ease, box-shadow .2s ease;
+    padding: 14px 22px; border-radius: 14px; transition: transform .2s ease, box-shadow .2s ease;
   }
   .btn:hover { transform: translateY(-2px); }
-  .btn.primary { color: #15110c; background: linear-gradient(100deg, var(--amber), var(--amber-2)); box-shadow: var(--glow); }
+  .btn.primary { color: #fff; background: var(--accent-grad); box-shadow: 0 16px 40px -14px rgba(46,113,115,.9); }
   .btn.ghost { color: var(--ink); border: 1px solid var(--line); background: rgba(255,255,255,.03); }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
-  .chip { font-size: .82rem; color: var(--mute); border: 1px solid var(--line); background: rgba(255,255,255,.025); padding: 6px 12px; border-radius: 999px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .chip { font-size: .82rem; color: var(--mute); border: 1px solid var(--line); background: rgba(255,255,255,.03); padding: 6px 12px; border-radius: 999px; }
+  .hero-icon { display: flex; justify-content: flex-end; }
+  .hero-icon img { width: min(230px, 60vw); filter: drop-shadow(0 30px 40px rgba(0,0,0,.45)); }
+  @media (max-width: 860px) { .hero-top { grid-template-columns: 1fr; } .hero-icon { justify-content: flex-start; } .hero-icon img { width: 110px; } }
 
-  /* desk demo */
-  .desk-card {
-    position: relative; background: linear-gradient(180deg, #1a1c27, #11121a);
-    border: 1px solid var(--line); border-radius: 26px; padding: 14px; box-shadow: 0 40px 100px -30px rgba(0,0,0,.7);
+  /* ---------- the "video": a macOS desktop running LoomLayout ---------- */
+  .video {
+    position: relative; margin-top: 40px; border-radius: 22px; padding: 10px;
+    background: #0f1620; border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 60px 120px -40px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.4);
   }
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 6px 14px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 4px 12px; }
   .tab {
     font: inherit; font-size: .84rem; color: var(--mute); background: transparent; border: 1px solid var(--line);
-    padding: 7px 13px; border-radius: 999px; cursor: pointer; transition: all .2s ease;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: all .2s ease;
   }
   .tab:hover { color: var(--ink); }
-  .tab[aria-selected="true"] { color: #15110c; background: var(--amber); border-color: transparent; font-weight: 650; }
+  .tab[aria-selected="true"] { color: #fff; background: var(--accent-grad); border-color: transparent; font-weight: 650; }
+
   .desk {
-    position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden;
-    background: radial-gradient(120% 90% at 30% 0%, #2a2f48 0%, #13151f 60%, #0d0e15 100%);
-    border: 1px solid var(--line);
+    position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden;
+    /* wallpaper in the brand's colours: dune sky to teal ground */
+    background:
+      radial-gradient(90% 70% at 18% 0%, rgba(232,219,199,.95) 0%, rgba(232,219,199,0) 60%),
+      radial-gradient(80% 60% at 100% 100%, rgba(46,113,115,.95) 0%, rgba(46,113,115,0) 60%),
+      linear-gradient(160deg, #8fb5cf 0%, #5d8ea6 45%, #2e5a6b 100%);
   }
   .menubar {
-    position: absolute; top: 0; left: 0; right: 0; height: 22px; z-index: 5; display: flex; align-items: center;
-    justify-content: space-between; padding: 0 12px; font-size: 11px; color: rgba(255,255,255,.75);
-    background: rgba(10,11,16,.55); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+    position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 40; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 12px; font-size: 12px; color: #1d1d1f;
+    background: rgba(246,246,244,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(0,0,0,.08);
   }
-  .menubar .ll { display: flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 650; }
-  .menubar .ll i { width: 9px; height: 9px; border-radius: 3px; background: linear-gradient(var(--amber), var(--amber-2)); display: inline-block; }
-  .menubar .sp { color: var(--mute); }
-  .screen {
-    position: absolute; top: 22px; bottom: 0; border-right: 1px solid rgba(255,255,255,.04);
-    transition: width .8s cubic-bezier(.2,.7,.2,1), opacity .6s ease;
+  .menubar .l, .menubar .r { display: flex; align-items: center; gap: 14px; }
+  .menubar .apple { font-size: 14px; line-height: 1; }
+  .menubar b { font-weight: 650; }
+  .menubar .mark { width: 15px; height: 15px; display: block; }
+  .menubar .mark.on { background: rgba(0,0,0,.08); border-radius: 4px; padding: 2px; box-sizing: content-box; }
+  .menubar .muted { color: rgba(29,29,31,.6); }
+  .dock {
+    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 35; display: flex; gap: 8px;
+    padding: 7px 10px; border-radius: 18px; background: rgba(255,255,255,.28); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.35);
   }
+  .dock i { width: 34px; height: 34px; border-radius: 9px; display: block; }
+  .dock i.ico { background: url("assets/app-icon.png") center/cover; box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
+
+  .screen { position: absolute; top: 24px; bottom: 0; transition: width .8s cubic-bezier(.2,.7,.2,1), opacity .6s ease; }
   .laptop { left: 0; width: 100%; }
-  .external { left: 65%; width: 35%; opacity: 0; background: rgba(255,255,255,.02); }
+  .external { left: 66%; width: 34%; opacity: 0; border-left: 1px solid rgba(0,0,0,.2); }
   .desk.dual .laptop { width: 62%; }
   .desk.dual .external { opacity: 1; }
+
+  /* macOS windows */
   .win {
-    position: absolute; z-index: 3; border-radius: 12px; overflow: hidden; background: #1d1f2b;
-    border: 1px solid rgba(255,255,255,.1); box-shadow: 0 18px 40px -14px rgba(0,0,0,.6);
+    position: absolute; z-index: 3; border-radius: 11px; overflow: hidden; background: #fbfbfc;
+    box-shadow: 0 0 0 .5px rgba(0,0,0,.35), 0 22px 46px -12px rgba(0,0,0,.45);
     transition: left .9s cubic-bezier(.2,.7,.2,1), top .9s cubic-bezier(.2,.7,.2,1), width .9s cubic-bezier(.2,.7,.2,1), height .9s cubic-bezier(.2,.7,.2,1);
   }
-  .win .bar {
-    height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 9px; font-size: 10.5px; color: var(--mute);
-    background: #242735; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; overflow: hidden;
+  .win .title {
+    height: 28px; display: flex; align-items: center; justify-content: center; position: relative;
+    background: linear-gradient(#ececee, #dcdce0); border-bottom: .5px solid rgba(0,0,0,.18);
+    font-size: 11.5px; font-weight: 600; color: #4a4a4f; white-space: nowrap; overflow: hidden;
   }
-  .win .bar b { width: 7px; height: 7px; border-radius: 50%; background: #ff5f57; box-shadow: 11px 0 0 #febc2e, 22px 0 0 #28c840; margin-right: 26px; flex: none; }
-  .win .body {
-    position: absolute; inset: 22px 10px 10px; border-radius: 6px;
-    background: repeating-linear-gradient(180deg, rgba(255,255,255,.07) 0 6px, transparent 6px 16px);
-    opacity: .9;
+  .win .title::before, .win .title::after {
+    content: ""; position: absolute; left: 10px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
+    background: #ff5f57; box-shadow: 18px 0 0 #febc2e, 36px 0 0 #28c840; box-sizing: border-box;
   }
-  #w1 .body { background: repeating-linear-gradient(180deg, rgba(255,184,107,.18) 0 6px, transparent 6px 16px); }
-  #w2 .body { background: repeating-linear-gradient(180deg, rgba(94,230,200,.16) 0 6px, transparent 6px 16px); }
-  #w3 .body { background: repeating-linear-gradient(180deg, rgba(164,139,255,.18) 0 6px, transparent 6px 16px); }
+  .win .title::after { display: none; }
+  .win .body { position: absolute; left: 14px; right: 14px; top: 42px; bottom: 14px; }
+  .win .body .ln { height: 6px; border-radius: 3px; background: #d6d9df; margin-bottom: 11px; }
+  .win .body .ln.s { width: 60%; }
+  .win .body .ln.m { width: 82%; }
+  .win .body .ln.a { background: rgba(181,97,59,.45); }
+  .win .body .ln.t { background: rgba(46,113,115,.45); }
+  .win .body .ln.v { background: rgba(143,181,207,.7); }
+  .win .body .ln.g { background: rgba(148,174,143,.7); }
+  .win .body .bar { height: 26px; border-radius: 7px; background: #e9ebef; margin-bottom: 14px; }
+  .win.dim { filter: saturate(.7); }
+
   .ghost {
-    position: absolute; z-index: 2; border-radius: 14px; opacity: 0; transition: opacity .35s ease, left .3s, top .3s, width .3s, height .3s;
-    background: linear-gradient(135deg, rgba(255,184,107,.25), rgba(255,138,91,.12)); border: 1.5px dashed rgba(255,184,107,.9);
+    position: absolute; z-index: 2; border-radius: 12px; opacity: 0;
+    transition: opacity .3s ease, left .3s, top .3s, width .3s, height .3s;
+    background: rgba(10,132,255,.22); border: 2px solid rgba(10,132,255,.85);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.4) inset;
   }
   .cursor {
-    position: absolute; z-index: 6; width: 16px; height: 16px; border-radius: 50%; opacity: 0;
-    transform: translate(-50%, -50%); background: #fff; box-shadow: 0 0 0 5px rgba(255,255,255,.18), 0 4px 12px rgba(0,0,0,.5);
+    position: absolute; z-index: 60; width: 22px; height: 26px; opacity: 0; pointer-events: none;
+    transform: translate(-3px, -3px);
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 26'%3E%3Cpath d='M3 2l0 19 5-5 3.5 7 3.2-1.6-3.5-6.8 7 0z' fill='%23000' stroke='%23fff' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat;
     transition: left 1.1s ease, top 1.1s ease, opacity .3s;
   }
   .keys {
-    position: absolute; z-index: 7; left: 50%; bottom: 16px; transform: translateX(-50%);
-    display: flex; gap: 6px; min-height: 30px; align-items: center;
+    position: absolute; z-index: 55; left: 50%; top: 42px; transform: translateX(-50%);
+    display: flex; gap: 6px; align-items: center; padding: 8px 12px; border-radius: 16px;
+    background: rgba(30,32,38,.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    opacity: 0; transition: opacity .25s ease;
   }
-  .keys kbd { font-size: 13px; min-width: 2.2em; height: 2.2em; background: linear-gradient(#ffb86b, #ff8a5b); color: #1a0f08; border-color: transparent; }
-  .caption { min-height: 48px; margin: 16px 6px 4px; text-align: center; color: var(--mute); font-size: .98rem; }
+  .keys.on { opacity: 1; }
+  .keys kbd { font-size: 13px; min-width: 2.2em; height: 2.2em; color: #1d1d1f; background: linear-gradient(#fdfdfd, #d9dbe0); border-color: transparent; box-shadow: 0 2px 0 #9ba0a8; }
+
+  /* switcher HUD like the app's alt-tab style switcher */
+  .hud {
+    position: absolute; z-index: 58; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0; transition: opacity .25s ease;
+    padding: 14px; border-radius: 22px; display: flex; gap: 10px; background: rgba(28,30,36,.62);
+    backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%); box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  }
+  .hud.on { opacity: 1; }
+  .hud .it { width: 86px; text-align: center; color: #e9e9ec; font-size: 11px; }
+  .hud .it i { display: block; width: 58px; height: 58px; margin: 0 auto 6px; border-radius: 14px; }
+  .hud .it.sel { }
+  .hud .it.sel i { box-shadow: 0 0 0 3px var(--mac-blue); }
+  .hud .it.sel span { background: var(--mac-blue); color: #fff; border-radius: 6px; padding: 1px 6px; }
+  .hud .i-editor { background: linear-gradient(135deg, #2e7173, #3f9a9c); }
+  .hud .i-browser { background: linear-gradient(135deg, #8fb5cf, #5d8ea6); }
+  .hud .i-notes { background: linear-gradient(135deg, #94ae8f, #6f8c6a); }
+
+  .caption {
+    min-height: 52px; margin: 16px 6px 6px; text-align: center; color: var(--mute); font-size: .98rem;
+  }
   .caption strong { color: var(--ink); font-weight: 600; }
-  .presets { display: none; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .presets { display: none; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
   .presets.show { display: flex; }
   .presets button { font: inherit; font-size: .84rem; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
-  .presets button:hover { border-color: var(--amber); }
+  .presets button:hover { border-color: var(--horizon); }
 
   /* sections */
   section { padding: 96px 0 0; }
-  .sec-head { display: grid; gap: 14px; max-width: 640px; margin-bottom: 40px; }
+  .sec-head { display: grid; gap: 14px; max-width: 660px; margin-bottom: 38px; }
   .sec-head p { color: var(--mute); font-size: 1.05rem; }
 
-  /* bento features */
   .bento { display: grid; gap: 14px; grid-template-columns: repeat(6, 1fr); }
   .tile {
     grid-column: span 2; position: relative; overflow: hidden; background: var(--panel); border: 1px solid var(--line);
     border-radius: 22px; padding: 26px; min-height: 230px; transition: transform .3s ease, border-color .3s ease;
   }
-  .tile:hover { transform: translateY(-3px); border-color: rgba(255,184,107,.35); }
+  .tile:hover { transform: translateY(-3px); border-color: rgba(143,181,207,.4); }
   .tile.wide { grid-column: span 4; }
   .tile p { color: var(--mute); margin-top: 8px; font-size: .97rem; max-width: 42ch; }
-  .tile .num { font: 600 .8rem ui-monospace, Menlo, monospace; color: var(--amber); letter-spacing: .08em; }
-  .tile .vis { position: absolute; right: -10px; bottom: -10px; width: 46%; height: 60%; opacity: .95; }
+  .tile .num { font: 600 .8rem ui-monospace, Menlo, monospace; color: var(--terracotta); letter-spacing: .08em; }
+  .tile .vis { position: absolute; right: -10px; bottom: -10px; width: 46%; height: 60%; }
   @media (max-width: 860px) { .bento { grid-template-columns: 1fr 1fr; } .tile, .tile.wide { grid-column: span 2; } }
   @media (max-width: 560px) { .bento { grid-template-columns: 1fr; } .tile, .tile.wide { grid-column: span 1; } }
 
-  /* mini mockups */
   .mini { display: grid; gap: 4px; width: 100%; height: 100%; }
-  .mini b {
-    display: block; border-radius: 6px; background: linear-gradient(160deg, #2a2e42, #1c1f2c); border: 1px solid rgba(255,255,255,.08);
-    font-size: 9px; font-weight: 600; color: var(--mute); padding: 5px 6px; letter-spacing: .02em;
-  }
-  .mini b.a { background: linear-gradient(160deg, rgba(255,184,107,.35), rgba(255,138,91,.18)); color: var(--ink); }
-  .mini b.t { background: linear-gradient(160deg, rgba(94,230,200,.3), rgba(94,230,200,.1)); color: var(--ink); }
-  .mini b.v { background: linear-gradient(160deg, rgba(164,139,255,.3), rgba(164,139,255,.1)); color: var(--ink); }
+  .mini b { display: block; border-radius: 7px; background: #fbfbfc; font-size: 9.5px; font-weight: 600; color: #4a4a4f; padding: 5px 7px; box-shadow: 0 0 0 .5px rgba(0,0,0,.2); }
+  .mini b.a { background: rgba(181,97,59,.9); color: #fff; box-shadow: none; }
+  .mini b.t { background: rgba(46,113,115,.9); color: #fff; box-shadow: none; }
+  .mini b.v { background: rgba(143,181,207,.95); color: #17212c; box-shadow: none; }
+  .mini b.g { background: rgba(148,174,143,.95); color: #17212c; box-shadow: none; }
 
-  /* examples */
   .examples { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
-  .example {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px;
-  }
-  .example .frame { aspect-ratio: 16/10; background: #0f1017; border-radius: 14px; padding: 8px; border: 1px solid var(--line); }
+  .example { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .example .frame { position: relative; aspect-ratio: 16/10; border-radius: 14px; padding: 8px; background: linear-gradient(160deg, #8fb5cf, #2e5a6b); }
   .example h3 { margin-top: 2px; }
   .example p { color: var(--mute); font-size: .95rem; }
   .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .ba .frame { position: relative; }
-  .ba .tag { position: absolute; top: -9px; left: 10px; font-size: .68rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: #15110c; background: var(--mute); border-radius: 6px; padding: 2px 6px; }
-  .ba .tag.on { background: var(--teal); }
-  .messy b { position: absolute; }
+  .ba .tag { position: absolute; top: -9px; left: 10px; z-index: 2; font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--charcoal); background: var(--dune); border-radius: 6px; padding: 2px 7px; }
+  .ba .tag.on { background: var(--sage); }
+  .messy b { position: absolute; font-size: 9.5px; padding: 5px 7px; border-radius: 7px; background: #fbfbfc; color: #4a4a4f; box-shadow: 0 0 0 .5px rgba(0,0,0,.2); }
   @media (max-width: 900px) { .examples { grid-template-columns: 1fr; } }
 
-  /* shortcuts */
   .keycards { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
   .kc { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
   .kc .combo { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
   .kc p { color: var(--mute); font-size: .93rem; }
-  .kc:hover { border-color: rgba(94,230,200,.35); }
+  .kc:hover { border-color: rgba(143,181,207,.4); }
   .more { margin-top: 20px; font-size: .95rem; color: var(--mute); }
-  .more a { color: var(--teal); text-decoration: none; border-bottom: 1px solid rgba(94,230,200,.4); }
   @media (max-width: 960px) { .keycards { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 560px) { .keycards { grid-template-columns: 1fr; } }
 
-  /* privacy */
-  .privacy {
-    display: grid; gap: 14px; grid-template-columns: 1.2fr 1fr 1fr; align-items: stretch;
-  }
+  .privacy { display: grid; gap: 14px; grid-template-columns: 1.2fr 1fr 1fr; }
   .priv { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 24px; }
-  .priv .big { font-size: 2.2rem; font-weight: 700; letter-spacing: -.03em; color: var(--teal); }
+  .priv .big { font-size: 2.3rem; font-weight: 700; letter-spacing: -.03em; color: var(--sage); }
   .priv p { color: var(--mute); font-size: .95rem; margin-top: 8px; }
-  .priv.hero-p { background: linear-gradient(160deg, rgba(94,230,200,.16), rgba(94,230,200,.04)); border-color: rgba(94,230,200,.25); }
+  .priv.hero-p { background: linear-gradient(160deg, rgba(46,113,115,.45), rgba(46,113,115,.12)); border-color: rgba(143,181,207,.25); }
   @media (max-width: 860px) { .privacy { grid-template-columns: 1fr; } }
 
-  /* faq */
   .faq { display: grid; gap: 10px; max-width: 820px; }
   details { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
   summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
   summary::-webkit-details-marker { display: none; }
-  summary::after { content: "+"; font-size: 1.3rem; color: var(--amber); }
+  summary::after { content: "+"; font-size: 1.3rem; color: var(--horizon); }
   details[open] summary::after { content: "–"; }
   details p { color: var(--mute); margin-top: 12px; font-size: .97rem; }
 
-  /* cta + footer */
   .cta {
-    margin-top: 110px; text-align: center; padding: 70px 22px; border-radius: 32px; position: relative; overflow: hidden;
-    background: linear-gradient(160deg, #1f1b2e, #14151d 60%); border: 1px solid var(--line);
+    margin-top: 110px; text-align: center; padding: 72px 22px; border-radius: 32px; position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #2a3b4f, #1f2b38 60%); border: 1px solid var(--line);
   }
-  .cta::before {
-    content: ""; position: absolute; left: 50%; top: -60%; width: 900px; height: 700px; transform: translateX(-50%);
-    background: radial-gradient(closest-side, rgba(255,138,91,.35), transparent); pointer-events: none;
-  }
-  .cta h2, .cta p { position: relative; }
+  .cta img { width: 84px; border-radius: 20px; margin: 0 auto 22px; display: block; box-shadow: 0 20px 40px -12px rgba(0,0,0,.5); }
   .cta p { color: var(--mute); margin: 14px 0 28px; }
   .cta .actions { justify-content: center; }
   .foot { margin: 60px 0 30px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; color: var(--dim); font-size: .9rem; }
   .foot a { color: var(--mute); text-decoration: none; }
   .foot a:hover { color: var(--ink); }
 
-  @media (min-width: 900px) {
-    .hero-grid { grid-template-columns: 1fr; }
-  }
   @media (max-width: 560px) {
-    .hero { padding-top: 56px; }
-    .desk-card { padding: 8px; border-radius: 20px; }
-    .win .bar b { margin-right: 22px; }
+    .hero { padding-top: 52px; }
+    .video { padding: 6px; border-radius: 16px; }
+    .win .title::before, .win .title::after { transform: scale(.85); }
+    .hud { transform: translate(-50%, -50%) scale(.7); }
+    .dock { display: none; }
     .cta { padding: 52px 18px; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="LoomLayout home">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#14151d"/><path d="M7 10h18M7 16h18M7 22h18" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round"/><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ffb86b"/><stop offset="1" stop-color="#ff8a5b"/></linearGradient></defs></svg>
-      LoomLayout
-    </a>
+    <a class="brand" href="#top" aria-label="LoomLayout home"><img src="assets/app-icon.png" alt="" width="30" height="30">LoomLayout</a>
     <div class="links">
       <a href="#demo">Demo</a>
       <a href="#features">Features</a>
@@ -300,16 +320,14 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-grid">
+    <div class="hero-top">
       <div>
         <p class="eyebrow">Window manager for macOS</p>
         <h1>Every window,<br><span class="grad">exactly where it belongs.</span></h1>
-        <p class="lead">LoomLayout lives in your menu bar. Snap windows with a keystroke or a drag, remember each display setup, and bring back a named layout in one shortcut.</p>
+        <p class="lead">LoomLayout sits in your menu bar. Snap windows with a keystroke or a drag, remember each display setup, and bring back a named layout in one shortcut.</p>
         <div class="actions">
-          <a class="btn primary" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">
-            Download for macOS
-          </a>
-          <a class="btn ghost" href="#demo">Watch the demo</a>
+          <a class="btn primary" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download for macOS</a>
+          <a class="btn ghost" href="#demo">Watch it work</a>
         </div>
         <div class="chips">
           <span class="chip">macOS 13 Ventura or later</span>
@@ -318,40 +336,60 @@
           <span class="chip">Version 1.0.0</span>
         </div>
       </div>
+      <div class="hero-icon"><img src="assets/app-icon.png" alt="LoomLayout app icon"></div>
     </div>
   </section>
 
-  <!-- DEMO -->
-  <section id="demo">
-    <div class="sec-head">
-      <p class="eyebrow">See it work</p>
-      <h2>Watch a desk come together.</h2>
-      <p>Pick a scene. The demo plays the same keystrokes and drags you'd use on your own Mac.</p>
-    </div>
-
-    <div class="desk-card">
+  <!-- VIDEO / DEMO -->
+  <section id="demo" style="padding-top:40px">
+    <div class="video" id="video">
       <div class="tabs" role="tablist" aria-label="Demo scenes">
         <button class="tab" role="tab" aria-selected="true" data-scene="keys">Keyboard snap</button>
         <button class="tab" role="tab" aria-selected="false" data-scene="drag">Drag to snap</button>
+        <button class="tab" role="tab" aria-selected="false" data-scene="switch">Window switcher</button>
         <button class="tab" role="tab" aria-selected="false" data-scene="displays">Display memory</button>
         <button class="tab" role="tab" aria-selected="false" data-scene="layouts">Named layouts</button>
       </div>
 
       <div class="desk" id="desk">
         <div class="menubar" aria-hidden="true">
-          <span class="ll"><i></i>LoomLayout</span>
-          <span class="sp">Layouts · Settings</span>
+          <div class="l">
+            <span class="apple"></span>
+            <b>Finder</b><span class="muted">File</span><span class="muted">Edit</span><span class="muted">View</span>
+          </div>
+          <div class="r">
+            <img class="mark on" id="menuMark" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cg stroke='%23000' stroke-width='1.1' stroke-linecap='round' fill='none'%3E%3Cpath d='M3.1 0.5V17.5M6.0 0.5V17.5M11.5 0.5V17.5M14.9 0.5V17.5M0.5 2.7H17.5M0.5 6.5H17.5M0.5 11.9H17.5M0.5 15.9H17.5'/%3E%3C/g%3E%3Ccircle cx='8.7' cy='9.2' r='1.6' fill='%23000'/%3E%3C/svg%3E">
+            <span class="muted" id="clock">Thu 13:02</span>
+          </div>
         </div>
+
         <div class="screen laptop" aria-hidden="true"></div>
         <div class="screen external" aria-hidden="true"></div>
 
-        <div class="win" id="w1" style="left:16%;top:22%;width:44%;height:56%"><div class="bar"><b></b>Browser</div><div class="body"></div></div>
-        <div class="win" id="w2" style="left:64%;top:12%;width:30%;height:40%"><div class="bar"><b></b>Notes</div><div class="body"></div></div>
-        <div class="win" id="w3" style="left:62%;top:58%;width:32%;height:30%"><div class="bar"><b></b>Editor</div><div class="body"></div></div>
+        <div class="win" id="w1" style="left:30%;top:14%;width:46%;height:58%"><div class="title">Browser</div><div class="body">
+          <div class="bar"></div>
+          <div class="ln m"></div><div class="ln v"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div>
+        </div></div>
+        <div class="win" id="w2" style="left:56%;top:30%;width:36%;height:44%"><div class="title">Notes</div><div class="body">
+          <div class="ln g"></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div>
+        </div></div>
+        <div class="win" id="w3" style="left:8%;top:18%;width:40%;height:64%"><div class="title">Editor</div><div class="body">
+          <div class="ln t"></div><div class="ln m"></div><div class="ln a"></div><div class="ln s"></div><div class="ln t"></div><div class="ln m"></div><div class="ln s"></div><div class="ln a"></div>
+        </div></div>
 
         <div class="ghost" id="ghost" style="left:0;top:0;width:50%;height:100%"></div>
         <div class="cursor" id="cursor" style="left:50%;top:50%"></div>
-        <div class="keys" id="keys" aria-live="polite"></div>
+
+        <div class="keys" id="keys"></div>
+        <div class="hud" id="hud">
+          <div class="it" data-i="0"><i class="i-browser"></i><span>Browser</span></div>
+          <div class="it" data-i="1"><i class="i-notes"></i><span>Notes</span></div>
+          <div class="it" data-i="2"><i class="i-editor"></i><span>Editor</span></div>
+        </div>
+
+        <div class="dock" aria-hidden="true">
+          <i style="background:#8fb5cf"></i><i style="background:#94ae8f"></i><i class="ico"></i><i style="background:#b5613b"></i>
+        </div>
       </div>
 
       <p class="caption" id="caption"><strong>Keyboard snap:</strong> one shortcut moves the focused window.</p>
@@ -377,8 +415,8 @@
         <h3 style="margin-top:12px">Keyboard snapping</h3>
         <p>Halves, quarters, thirds, maximize, center, and back to the previous size. Move a window to another display with one shortcut. Every key can be changed in Settings.</p>
         <div class="vis" aria-hidden="true">
-          <div class="mini" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">
-            <b class="a" style="grid-row:1/3">Left half</b><b>Top right</b><b>Bottom right</b>
+          <div class="mini" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;padding:10px">
+            <b class="a" style="grid-row:1/3">Left half</b><b class="t">Top right</b><b class="v">Bottom right</b>
           </div>
         </div>
       </article>
@@ -397,8 +435,8 @@
         <h3 style="margin-top:12px">Remembers each display setup</h3>
         <p>"MacBook alone" and "MacBook + monitor" are separate memories. Unplug the monitor, plug it back in, and your windows return to the spots they had.</p>
         <div class="vis" aria-hidden="true">
-          <div class="mini" style="grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;opacity:.9">
-            <b class="t" style="grid-row:1/3">Editor</b><b>Chat</b><b>Docs</b>
+          <div class="mini" style="grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;padding:10px">
+            <b class="t" style="grid-row:1/3">Editor</b><b class="v">Chat</b><b class="g">Docs</b>
           </div>
         </div>
       </article>
@@ -426,16 +464,20 @@
     <div class="examples">
       <article class="example">
         <div class="ba">
-          <div class="frame messy" style="position:relative">
+          <div class="frame">
             <span class="tag">Before</span>
-            <b style="left:8%;top:14%;width:52%;height:50%;transform:rotate(-2deg);border-radius:6px;background:#23263a;font-size:9px;padding:5px;color:var(--mute)">Editor</b>
-            <b style="left:44%;top:30%;width:50%;height:46%;transform:rotate(3deg);border-radius:6px;background:#23263a;font-size:9px;padding:5px;color:var(--mute)">Browser</b>
-            <b style="left:20%;top:52%;width:40%;height:36%;transform:rotate(-1deg);border-radius:6px;background:#23263a;font-size:9px;padding:5px;color:var(--mute)">Notes</b>
+            <div class="messy" style="position:absolute;inset:8px">
+              <b style="left:6%;top:12%;width:54%;height:52%;transform:rotate(-2deg)">Editor</b>
+              <b style="left:42%;top:30%;width:52%;height:46%;transform:rotate(3deg)">Browser</b>
+              <b style="left:18%;top:54%;width:42%;height:38%;transform:rotate(-1deg)">Notes</b>
+            </div>
           </div>
           <div class="frame">
             <span class="tag on">After</span>
-            <div class="mini" style="grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr">
-              <b class="a" style="grid-row:1/3">Editor</b><b class="t">Browser</b><b class="v">Notes</b>
+            <div style="position:absolute;inset:8px">
+              <div class="mini" style="grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr">
+                <b class="a" style="grid-row:1/3">Editor</b><b class="t">Browser</b><b class="v">Notes</b>
+              </div>
             </div>
           </div>
         </div>
@@ -445,8 +487,10 @@
 
       <article class="example">
         <div class="frame">
-          <div class="mini" style="grid-template-columns:7fr 3fr;grid-template-rows:1fr 1fr">
-            <b class="a" style="grid-row:1/3">Video call</b><b class="t">Notes</b><b class="v">Chat</b>
+          <div style="position:absolute;inset:8px">
+            <div class="mini" style="grid-template-columns:7fr 3fr;grid-template-rows:1fr 1fr">
+              <b class="a" style="grid-row:1/3">Video call</b><b class="t">Notes</b><b class="v">Chat</b>
+            </div>
           </div>
         </div>
         <h3>Meetings</h3>
@@ -457,14 +501,18 @@
         <div class="ba">
           <div class="frame">
             <span class="tag">Undocked</span>
-            <div class="mini" style="grid-template-columns:1fr;grid-template-rows:1fr">
-              <b class="a">Laptop screen, everything squeezed</b>
+            <div style="position:absolute;inset:8px">
+              <div class="mini" style="grid-template-columns:1fr;grid-template-rows:1fr">
+                <b class="a">Laptop screen, everything squeezed</b>
+              </div>
             </div>
           </div>
           <div class="frame">
             <span class="tag on">Docked</span>
-            <div class="mini" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">
-              <b class="a" style="grid-row:1/3">Editor</b><b class="t">Browser</b><b class="v">Notes</b>
+            <div style="position:absolute;inset:8px">
+              <div class="mini" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">
+                <b class="a" style="grid-row:1/3">Editor</b><b class="t">Browser</b><b class="v">Notes</b>
+              </div>
             </div>
           </div>
         </div>
@@ -508,11 +556,11 @@
         <p>bytes sent anywhere. LoomLayout sends nothing to anyone, as described in its privacy policy.</p>
       </div>
       <div class="priv">
-        <div class="big" style="color:var(--amber)">1</div>
+        <div class="big" style="color:var(--horizon)">1</div>
         <p>permission: Accessibility, which is needed to move other apps' windows. Nothing else is requested.</p>
       </div>
       <div class="priv">
-        <div class="big" style="color:var(--violet)">0</div>
+        <div class="big" style="color:var(--dune)">0</div>
         <p>window titles in the placement log. It records app IDs and window rectangles only, and rotates at 1 MB.</p>
       </div>
     </div>
@@ -551,6 +599,7 @@
   <!-- CTA -->
   <section>
     <div class="cta">
+      <img src="assets/app-icon.png" alt="" width="84" height="84">
       <h2>Give your windows a home.</h2>
       <p>LoomLayout 1.0.0 for macOS 13 Ventura or later.</p>
       <div class="actions">
@@ -574,6 +623,7 @@
   const keys = document.getElementById('keys');
   const cursor = document.getElementById('cursor');
   const ghost = document.getElementById('ghost');
+  const hud = document.getElementById('hud');
   const presets = document.getElementById('presets');
   const W = { w1: document.getElementById('w1'), w2: document.getElementById('w2'), w3: document.getElementById('w3') };
 
@@ -582,11 +632,20 @@
     el.style.left = r[0] + '%'; el.style.top = r[1] + '%';
     el.style.width = r[2] + '%'; el.style.height = r[3] + '%';
   }
+  function raise(el) { el.style.zIndex = 4; Object.values(W).forEach(w => { if (w !== el) w.style.zIndex = 3; }); }
   function say(html) { caption.innerHTML = html; }
-  function showKeys(list) { keys.innerHTML = list.map(k => '<kbd>' + k + '</kbd>').join(''); }
+  function showKeys(list) {
+    keys.innerHTML = list.map(k => '<kbd>' + k + '</kbd>').join('');
+    keys.classList.toggle('on', list.length > 0);
+  }
   function setDual(on) { desk.classList.toggle('dual', on); }
-  function showGhost(r) {
-    place(ghost, r);
+  function setGhost(r) { place(ghost, r); }
+  function showHud(on, sel) {
+    hud.classList.toggle('on', !!on);
+    hud.querySelectorAll('.it').forEach(it => {
+      const selected = Number(it.dataset.i) === sel;
+      it.classList.toggle('sel', selected);
+    });
   }
 
   let timers = [];
@@ -614,9 +673,9 @@
       caption: '<strong>Keyboard snap:</strong> one shortcut moves the focused window.',
       period: 8200,
       reset() {
-        setDual(false); showKeys([]);
-        place(W.w1, [16, 22, 44, 56]); place(W.w2, [64, 12, 30, 40]); place(W.w3, [62, 58, 32, 30]);
-        ghost.style.opacity = 0; cursor.style.opacity = 0;
+        setDual(false); showKeys([]); showHud(false, -1);
+        place(W.w1, [30, 14, 46, 58]); place(W.w2, [56, 30, 36, 44]); place(W.w3, [8, 18, 40, 64]);
+        raise(W.w1); ghost.style.opacity = 0; cursor.style.opacity = 0;
       },
       frames: [
         [400,  () => { showKeys(['⌃', '⌥', '←']); place(W.w1, [1, 2, 48, 96]); say('<strong>Left half.</strong> One shortcut, no dragging.'); }],
@@ -629,25 +688,42 @@
       caption: '<strong>Drag to snap:</strong> grab a window by its title bar.',
       period: 7600,
       reset() {
-        setDual(false); showKeys([]);
-        place(W.w1, [3, 6, 30, 40]); place(W.w2, [40, 30, 36, 46]); place(W.w3, [66, 60, 30, 30]);
-        showGhost([0, 0, 50, 100]); ghost.style.opacity = 0;
-        cursor.style.transition = 'none'; cursor.style.left = '58%'; cursor.style.top = '36%'; cursor.style.opacity = 0;
+        setDual(false); showKeys([]); showHud(false, -1);
+        place(W.w1, [30, 14, 46, 58]); place(W.w2, [56, 30, 36, 44]); place(W.w3, [40, 50, 40, 44]);
+        raise(W.w3);
+        setGhost([0, 0, 50, 100]); ghost.style.opacity = 0;
+        cursor.style.transition = 'none'; cursor.style.left = '60%'; cursor.style.top = '60%'; cursor.style.opacity = 0;
         void cursor.offsetWidth; cursor.style.transition = '';
       },
       frames: [
         [400,  () => { cursor.style.opacity = 1; say('<strong>Grab</strong> a window by its title bar.'); }],
-        [900,  () => { cursor.style.left = '6%'; cursor.style.top = '12%'; place(W.w2, [4, 10, 36, 46]); say('<strong>Drag</strong> toward the left edge…'); }],
-        [2300, () => { ghost.style.opacity = 1; say('…and a <strong>preview</strong> shows where it will land.'); }],
-        [3700, () => { ghost.style.opacity = 0; place(W.w2, [1, 2, 48, 96]); say('<strong>Release,</strong> and it snaps to the left half.'); }],
-        [5600, () => { cursor.style.opacity = 0; }]
+        [900,  () => { cursor.style.left = '48%'; cursor.style.top = '51%'; say('<strong>Drag</strong> toward the left edge…'); }],
+        [1500, () => { cursor.style.left = '6%'; cursor.style.top = '10%'; place(W.w3, [4, 6, 40, 64]); }],
+        [2600, () => { ghost.style.opacity = 1; say('…and a <strong>preview</strong> shows where it will land.'); }],
+        [3900, () => { ghost.style.opacity = 0; place(W.w3, [1, 2, 48, 96]); say('<strong>Release,</strong> and it snaps to the left half.'); }],
+        [5800, () => { cursor.style.opacity = 0; }]
+      ]
+    },
+    switch: {
+      caption: '<strong>Window switcher:</strong> hold ⌃⌥ and tap Tab, most recently used first.',
+      period: 7000,
+      reset() {
+        setDual(false); showKeys([]); showHud(false, -1);
+        place(W.w1, [30, 14, 46, 58]); place(W.w2, [56, 30, 36, 44]); place(W.w3, [8, 18, 40, 64]);
+        raise(W.w1); ghost.style.opacity = 0; cursor.style.opacity = 0;
+      },
+      frames: [
+        [400,  () => { showKeys(['⌃', '⌥', 'Tab']); showHud(true, 0); }],
+        [1500, () => { showHud(true, 1); }],
+        [2600, () => { showHud(true, 2); }],
+        [3700, () => { showKeys([]); showHud(false, 2); raise(W.w3); say('<strong>Release</strong> to bring the editor forward.'); }]
       ]
     },
     displays: {
       caption: '<strong>Display memory:</strong> each display setup keeps its own layout.',
       period: 8600,
       reset() {
-        setDual(true); showKeys([]);
+        setDual(true); showKeys([]); showHud(false, -1);
         place(W.w1, [68, 8, 28, 40]); place(W.w2, [68, 52, 28, 40]); place(W.w3, [3, 6, 30, 88]);
         ghost.style.opacity = 0; cursor.style.opacity = 0;
       },
@@ -659,7 +735,7 @@
     layouts: {
       caption: LAYOUT_TEXT.coding,
       manual: true,
-      reset() { setDual(false); showKeys([]); ghost.style.opacity = 0; cursor.style.opacity = 0; applyLayout('coding'); }
+      reset() { setDual(false); showKeys([]); showHud(false, -1); ghost.style.opacity = 0; cursor.style.opacity = 0; applyLayout('coding'); }
     }
   };
 
@@ -671,11 +747,7 @@
     s.reset();
     if (s.manual) return;
     say(s.caption);
-    if (reduce) {
-      // Show the final frame once, no motion.
-      s.frames[s.frames.length - 1][1]();
-      return;
-    }
+    if (reduce) { s.frames[s.frames.length - 1][1](); return; }
     const cycle = () => {
       s.reset();
       s.frames.forEach(([ms, fn]) => at(ms, fn));
@@ -684,21 +756,17 @@
     cycle();
   }
 
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => play(tab.dataset.scene));
-  });
-  presets.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => applyLayout(btn.dataset.layout));
-  });
+  document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => play(tab.dataset.scene)));
+  presets.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => applyLayout(btn.dataset.layout)));
 
-  // Start the first scene when the demo is on screen, so the animation isn't wasted on hidden tabs.
+  // Start when the video is on screen; a timer covers browsers without IntersectionObserver.
   let started = false;
-  const io = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && !started) { started = true; play('keys'); io.disconnect(); }
-  }, { threshold: 0.35 });
-  io.observe(desk);
-  // Fallback if IntersectionObserver never fires.
-  setTimeout(() => { if (!started) { started = true; play('keys'); } }, 1500);
+  function go() { if (!started) { started = true; play('keys'); } }
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => { if (entries[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: 0.3 });
+    io.observe(desk);
+  }
+  setTimeout(go, 1500);
 })();
 </script>
 </body>
