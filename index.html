@@ -4,76 +4,361 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LoomLayout – window manager for macOS</title>
-<meta name="description" content="LoomLayout is a macOS menu-bar window manager: keyboard snapping, drag-to-grid, saved layouts and an alt-tab style switcher.">
+<meta name="description" content="LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging, remember where every window belongs for each display setup, and save named layouts. Everything stays on your Mac.">
 <style>
   :root {
-    --bg: #f7f7f5; --fg: #1d1d1f; --muted: #6e6e73; --card: #ffffff;
-    --accent: #3b5bdb; --accent-fg: #ffffff; --border: #e5e5ea;
+    --bg: #f6f6f4; --fg: #1d1d1f; --muted: #6b6b70; --card: #ffffff;
+    --accent: #3b5bdb; --accent-soft: #e7ecff; --accent-fg: #ffffff;
+    --border: #e4e4e0; --screen: #dfe3ea; --win: #ffffff; --win-line: #c9ced8;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #111114; --fg: #f5f5f7; --muted: #a1a1a6; --card: #1c1c20;
-      --accent: #748ffc; --accent-fg: #0b0b0f; --border: #2c2c31;
+      --bg: #0f0f12; --fg: #f5f5f7; --muted: #a1a1a8; --card: #18181d;
+      --accent: #748ffc; --accent-soft: #1f2540; --accent-fg: #0b0b0f;
+      --border: #2a2a31; --screen: #23232b; --win: #2e2e38; --win-line: #3b3b47;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #111114; --fg: #f5f5f7; --muted: #a1a1a6; --card: #1c1c20;
-    --accent: #748ffc; --accent-fg: #0b0b0f; --border: #2c2c31;
+    --bg: #0f0f12; --fg: #f5f5f7; --muted: #a1a1a8; --card: #18181d;
+    --accent: #748ffc; --accent-soft: #1f2540; --accent-fg: #0b0b0f;
+    --border: #2a2a31; --screen: #23232b; --win: #2e2e38; --win-line: #3b3b47;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0; background: var(--bg); color: var(--fg);
-    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  main { max-width: 860px; margin: 0 auto; padding: 56px 16px 48px; }
-  h1 { font-size: clamp(2rem, 6vw, 3rem); margin: 0 0 12px; letter-spacing: -0.02em; }
-  h2 { font-size: 1.35rem; margin: 40px 0 12px; }
-  p.lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 28px; }
+  a { color: var(--accent); }
+  main { max-width: 980px; margin: 0 auto; padding: 0 20px 56px; }
+  section { padding: 56px 0 8px; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.05; margin: 0 0 14px; letter-spacing: -0.03em; }
+  h2 { font-size: clamp(1.5rem, 4vw, 2rem); letter-spacing: -0.02em; margin: 0 0 10px; }
+  h3 { font-size: 1.05rem; margin: 0 0 6px; }
+  p { margin: 0 0 14px; }
+  .lead { font-size: clamp(1.1rem, 2.4vw, 1.3rem); color: var(--muted); max-width: 640px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .78rem; color: var(--accent); font-weight: 700; margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  code, kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px;
+  }
+
+  /* hero */
+  .hero { padding-top: 64px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 26px 0 10px; }
   .btn {
     display: inline-block; background: var(--accent); color: var(--accent-fg);
     text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 12px;
   }
-  .note { color: var(--muted); font-size: 0.92rem; margin-top: 12px; }
-  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px;
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
+  .meta { font-size: .9rem; color: var(--muted); }
+
+  /* screen mockups */
+  .stage {
+    margin-top: 44px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 22px; box-shadow: var(--shadow);
   }
-  .card h3 { margin: 0 0 6px; font-size: 1rem; }
-  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-  ol { padding-left: 22px; }
-  li { margin-bottom: 8px; }
-  code { background: var(--card); border: 1px solid var(--border); padding: 1px 6px; border-radius: 6px; font-size: 0.9em; }
-  footer { color: var(--muted); font-size: 0.85rem; margin-top: 56px; border-top: 1px solid var(--border); padding-top: 18px; }
+  .screen {
+    position: relative; aspect-ratio: 16 / 9; background: var(--screen);
+    border-radius: 10px; overflow: hidden;
+  }
+  .win {
+    position: absolute; background: var(--win); border: 1px solid var(--win-line);
+    border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    transition: all .6s ease;
+  }
+  .win::before {
+    content: ""; display: block; height: 14px; border-bottom: 1px solid var(--win-line);
+    background: linear-gradient(var(--win), var(--win));
+    background-image: radial-gradient(circle, #ff5f57 0 3px, transparent 3.5px), radial-gradient(circle, #febc2e 0 3px, transparent 3.5px), radial-gradient(circle, #28c840 0 3px, transparent 3.5px);
+    background-size: 12px 12px; background-repeat: no-repeat; background-position: 6px 1px, 20px 1px, 34px 1px;
+  }
+  .ghostzone {
+    position: absolute; background: var(--accent-soft); border: 2px dashed var(--accent);
+    border-radius: 8px; opacity: .9;
+  }
+  .caption { font-size: .92rem; color: var(--muted); margin-top: 14px; text-align: center; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .tabs span {
+    font-size: .85rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted);
+  }
+  .tabs span.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
+
+  /* cards */
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 28px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+  }
+  .card p { color: var(--muted); font-size: .97rem; margin: 0; }
+  .card .ico {
+    width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; font-weight: 700; margin-bottom: 14px;
+  }
+
+  /* steps */
+  .steps { counter-reset: s; display: grid; gap: 14px; margin-top: 26px; }
+  .step {
+    display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px;
+  }
+  .step .n {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-fg);
+    display: grid; place-items: center; font-weight: 700;
+  }
+  .step p { color: var(--muted); margin: 0; font-size: .97rem; }
+
+  /* shortcuts table */
+  .table-wrap { overflow-x: auto; margin-top: 22px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td.keys { white-space: nowrap; font-family: ui-monospace, Menlo, monospace; }
+
+  /* privacy */
+  .privacy { background: var(--accent-soft); border-radius: 18px; padding: 26px; margin-top: 26px; }
+  .privacy ul { margin: 0; padding-left: 20px; }
+  .privacy li { margin-bottom: 8px; }
+
+  /* faq */
+  details { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-top: 10px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 10px 0 0; font-size: .97rem; }
+
+  .cta { text-align: center; padding: 64px 0 8px; }
+  .cta p { color: var(--muted); }
+  footer { color: var(--muted); font-size: .88rem; border-top: 1px solid var(--border); margin-top: 48px; padding-top: 20px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; }
+
+  @media (max-width: 560px) {
+    main { padding: 0 16px 48px; }
+    .hero { padding-top: 40px; }
+    .stage { padding: 14px; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>LoomLayout</h1>
-  <p class="lead">A window manager for macOS that lives in your menu bar. Snap windows with the keyboard, drag them onto a grid, save layouts and switch windows quickly.</p>
 
-  <a class="btn" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download for macOS</a>
-  <p class="note">Version 1.0.0 · macOS 13 (Ventura) or later · .dmg file</p>
+  <!-- HERO -->
+  <section class="hero">
+    <p class="eyebrow">Window manager for macOS</p>
+    <h1>Put every window exactly where it belongs.</h1>
+    <p class="lead">LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging them, let it remember where each window goes for every display setup, and bring back a named layout in one keystroke.</p>
+    <div class="actions">
+      <a class="btn" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download for macOS</a>
+      <a class="btn ghost" href="#how">See how it works</a>
+    </div>
+    <p class="meta">Version 1.0.0 · macOS 13 (Ventura) or later · free · nothing leaves your Mac</p>
 
-  <h2>Features</h2>
-  <div class="grid">
-    <div class="card"><h3>Keyboard snapping</h3><p>Halves, quarters, thirds, maximize, center, and back to the previous size.</p></div>
-    <div class="card"><h3>Drag to snap</h3><p>Drag a window to an edge, a corner, or a grid locked to a screen.</p></div>
-    <div class="card"><h3>Split screens</h3><p>Split a screen into 2 or 4 parts and remember which window sits where.</p></div>
-    <div class="card"><h3>Saved layouts</h3><p>Save a layout under a name and restore it from the menu or when displays reconnect.</p></div>
-    <div class="card"><h3>Window switcher</h3><p>An alt-tab style switcher, most recently used first.</p></div>
-    <div class="card"><h3>Custom shortcuts</h3><p>Change any shortcut in Settings. Nothing is hard-coded.</p></div>
-  </div>
+    <div class="stage" aria-label="Animated demo of snapping a window to the left half">
+      <div class="screen" id="demo">
+        <div class="win" id="demoWin" style="left:6%;top:12%;width:44%;height:70%;"></div>
+        <div class="win" style="left:54%;top:12%;width:40%;height:34%;"></div>
+        <div class="win" style="left:54%;top:50%;width:40%;height:32%;"></div>
+      </div>
+      <p class="caption" id="demoCaption">Press ⌃⌥← and the window moves to the left half.</p>
+    </div>
+  </section>
 
-  <h2>Install</h2>
-  <ol>
-    <li>Download <code>LoomLayout-1.0.0.dmg</code> and open it.</li>
-    <li>Drag <strong>LoomLayout</strong> into <strong>Applications</strong>.</li>
-    <li>Open LoomLayout. The first time, right-click the app and choose <strong>Open</strong> if macOS blocks it.</li>
-    <li>Grant Accessibility access under <em>System Settings → Privacy &amp; Security → Accessibility</em>, then quit and reopen LoomLayout.</li>
-  </ol>
-  <p class="note">LoomLayout needs Accessibility access to move other apps' windows. It requests nothing else.</p>
+  <!-- FEATURES -->
+  <section id="features">
+    <p class="eyebrow">What it does</p>
+    <h2>Six things that save you a lot of dragging.</h2>
+    <p class="muted">Each one works on its own. Together they keep your desk the same, every day.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">⌨</div><h3>Keyboard snapping</h3><p>Halves, quarters, thirds, maximize, center, and the previous size. One shortcut per placement, and every shortcut can be changed.</p></div>
+      <div class="card"><div class="ico">⇲</div><h3>Drag to snap</h3><p>Drag a window to an edge or corner. A preview shows where it will land before you let go. Turn it off if you don't want it.</p></div>
+      <div class="card"><div class="ico">▦</div><h3>Locked grid</h3><p>Lock a screen to a grid of 2 side by side, 2 stacked, 2 × 2, or your own split. Drop a window on one cell, or on the border between two.</p></div>
+      <div class="card"><div class="ico">⟲</div><h3>Remembers your layout</h3><p>Each display setup keeps its own memory. Unplug your external monitor and reconnect it later, and your windows come back where they were.</p></div>
+      <div class="card"><div class="ico">★</div><h3>Named layouts</h3><p>Save an arrangement under a name, restore it from the menu, or let it restore automatically when a display setup connects.</p></div>
+      <div class="card"><div class="ico">⇥</div><h3>Window switcher</h3><p>An alt-tab style switcher that lists windows by most recently used. Hold ⌃⌥ and press Tab to move through them.</p></div>
+    </div>
+  </section>
 
-  <footer>© LoomLayout · <a href="https://github.com/grgurculina/loom-layout-site" style="color:inherit">Source of this page</a></footer>
+  <!-- DRAG & GRID -->
+  <section id="grid">
+    <p class="eyebrow">Dragging</p>
+    <h2>Drag, and the screen tells you where it will land.</h2>
+    <p class="muted">Start dragging by a window's title bar. Move toward an edge or a corner and a preview shows the result. Releasing applies it.</p>
+
+    <div class="tabs" id="gridTabs">
+      <span class="on" data-view="edge">Edges &amp; corners</span>
+      <span data-view="grid2">Locked: 2 side by side</span>
+      <span data-view="grid4">Locked: 2 × 2</span>
+    </div>
+    <div class="stage">
+      <div class="screen" id="gridScreen">
+        <div id="gridLines"></div>
+        <div class="ghostzone" id="ghost"></div>
+      </div>
+      <p class="caption" id="gridCaption">Drop near the left edge to fill the left half. Top edge maximizes, bottom edge fills the bottom half, and corners fill a quarter.</p>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <p class="eyebrow">Getting started</p>
+    <h2>Up and running in about two minutes.</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><h3>Install</h3><p>Open <code>LoomLayout-1.0.0.dmg</code> and drag LoomLayout into Applications. Start it from there. The first time, right-click it and choose <strong>Open</strong> if macOS blocks it, because this build isn't notarized.</p></div></div>
+      <div class="step"><div class="n">2</div><div><h3>Allow Accessibility</h3><p>LoomLayout moves other apps' windows, so macOS needs your permission. Go to <em>System Settings → Privacy &amp; Security → Accessibility</em>, turn LoomLayout on, then quit and reopen it. This is the only permission it asks for.</p></div></div>
+      <div class="step"><div class="n">3</div><div><h3>Try a shortcut</h3><p>Click a window and press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd>. It moves to the left half. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Return</kbd> to maximize it.</p></div></div>
+      <div class="step"><div class="n">4</div><div><h3>Tune it</h3><p>Open LoomLayout's menu bar icon, then <strong>Settings</strong>. Pick a grid for each screen under <em>Setup</em>, change any shortcut under <em>Shortcuts</em>, and decide which apps it remembers under <em>Apps</em>.</p></div></div>
+    </div>
+  </section>
+
+  <!-- SHORTCUTS -->
+  <section id="shortcuts">
+    <p class="eyebrow">Shortcuts</p>
+    <h2>Default shortcuts</h2>
+    <p class="muted">⌃ is Control, ⌥ is Option, ⇧ is Shift, ⌘ is Command. Change any of them in Settings → Shortcuts. A shortcut must include ⌃, ⌥ or ⌘, and conflicts are refused with the name of the action that already uses the key.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Action</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td>Left half / right half</td><td class="keys">⌃⌥← / ⌃⌥→</td></tr>
+          <tr><td>Top half / bottom half</td><td class="keys">⌃⌥↑ / ⌃⌥↓</td></tr>
+          <tr><td>Top-left / top-right quarter</td><td class="keys">⌃⌥U / ⌃⌥I</td></tr>
+          <tr><td>Bottom-left / bottom-right quarter</td><td class="keys">⌃⌥J / ⌃⌥K</td></tr>
+          <tr><td>Left / center / right third</td><td class="keys">⌃⌥D / ⌃⌥G / ⌃⌥E</td></tr>
+          <tr><td>Maximize</td><td class="keys">⌃⌥Return</td></tr>
+          <tr><td>Center</td><td class="keys">⌃⌥C</td></tr>
+          <tr><td>Previous size and position</td><td class="keys">⌃⌥Delete</td></tr>
+          <tr><td>Move to previous / next display</td><td class="keys">⌃⌥⌘← / ⌃⌥⌘→</td></tr>
+          <tr><td>Remembered slot 1–4</td><td class="keys">⌃⌥1 … ⌃⌥4</td></tr>
+          <tr><td>Split into 2 side by side / 2 stacked</td><td class="keys">⌃⌥⇧H / ⌃⌥⇧V</td></tr>
+          <tr><td>Split into 4 (2 × 2)</td><td class="keys">⌃⌥Q</td></tr>
+          <tr><td>No split</td><td class="keys">⌃⌥⇧F</td></tr>
+          <tr><td>Save / restore remembered positions</td><td class="keys">⌃⌥S / ⌃⌥R</td></tr>
+          <tr><td>Save named layout</td><td class="keys">⌃⌥⇧S</td></tr>
+          <tr><td>Window switcher: next / previous</td><td class="keys">⌃⌥Tab / ⌃⌥⇧Tab</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin-top:12px;font-size:.92rem">In the switcher, Tab or the arrow keys move the selection, Return or a click picks a window, Esc cancels, and releasing ⌃ or ⌥ picks the highlighted window.</p>
+  </section>
+
+  <!-- PRIVACY -->
+  <section id="privacy">
+    <p class="eyebrow">Your data</p>
+    <h2>Everything stays on your Mac.</h2>
+    <p class="muted">LoomLayout has no account and sends nothing to anyone, as described in its privacy policy.</p>
+    <div class="privacy">
+      <ul>
+        <li><strong>Layouts and settings</strong> are saved in <code>~/Library/Application Support/MagicTab/state.json</code>. A damaged file is kept as a backup, never deleted.</li>
+        <li><strong>The placement log</strong> (<code>~/Library/Logs/MagicTab/placements.csv</code>) records app IDs and window rectangles only. It never contains window titles, and it's rotated at 1 MB. Delete it any time.</li>
+        <li><strong>Permissions:</strong> only Accessibility, which is needed to move windows.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <p class="eyebrow">Questions</p>
+    <h2>Common questions</h2>
+    <details>
+      <summary>The menu bar icon shows, but nothing happens.</summary>
+      <p>Accessibility access isn't granted for this copy. Open System Settings → Privacy &amp; Security → Accessibility. If LoomLayout is listed but still asks for access, remove it with <strong>−</strong>, add <code>/Applications/LoomLayout.app</code> with <strong>+</strong>, turn it on, and reopen LoomLayout.</p>
+    </details>
+    <details>
+      <summary>I updated LoomLayout and it asked for Accessibility again.</summary>
+      <p>Each new build has a new signature, and macOS treats it as a different app. Approve the copy in Applications again.</p>
+    </details>
+    <details>
+      <summary>A window doesn't move, or lands somewhere unexpected.</summary>
+      <p>Check Settings → Apps. An app switched off with <strong>Remember here</strong> won't be placed. Some apps also have a minimum window size, and a snap smaller than that leaves the window at its minimum.</p>
+    </details>
+    <details>
+      <summary>A shortcut does nothing.</summary>
+      <p>Another app may already use that combination. Choose a different shortcut in Settings → Shortcuts.</p>
+    </details>
+    <details>
+      <summary>What doesn't it do?</summary>
+      <p>Windows on other Spaces and in full-screen mode aren't moved. Dragging starts from the title bar (the top 80 points of a window). ⌘Tab stays with macOS. Shortcuts are single key presses, so true two-key chords aren't used.</p>
+    </details>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Give your windows a home.</h2>
+    <p>Download LoomLayout for macOS 13 or later.</p>
+    <div class="actions" style="justify-content:center">
+      <a class="btn" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download LoomLayout 1.0.0</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>© LoomLayout</span>
+    <span><a href="https://github.com/grgurculina/loom-layout-site/releases">All releases</a> · <a href="https://github.com/grgurculina/loom-layout-site">Source of this page</a></span>
+  </footer>
+
 </main>
+
+<script>
+  // Hero demo: cycle a window through three placements.
+  (function () {
+    const win = document.getElementById('demoWin');
+    const caption = document.getElementById('demoCaption');
+    const steps = [
+      { l: '6%', t: '12%', w: '44%', h: '70%', c: 'Press ⌃⌥← and the window moves to the left half.' },
+      { l: '54%', t: '12%', w: '40%', h: '70%', c: 'Press ⌃⌥→ and it moves to the right half.' },
+      { l: '0%', t: '0%', w: '100%', h: '100%', c: 'Press ⌃⌥Return and it maximizes.' }
+    ];
+    let i = 0;
+    function apply() {
+      const s = steps[i];
+      win.style.left = s.l; win.style.top = s.t; win.style.width = s.w; win.style.height = s.h;
+      caption.textContent = s.c;
+      i = (i + 1) % steps.length;
+    }
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setInterval(apply, 2400);
+    }
+  })();
+
+  // Grid section: switch between edge snapping and locked grids.
+  (function () {
+    const screen = document.getElementById('gridScreen');
+    const lines = document.getElementById('gridLines');
+    const ghost = document.getElementById('ghost');
+    const caption = document.getElementById('gridCaption');
+    const views = {
+      edge: {
+        lines: '',
+        ghost: { l: '0%', t: '0%', w: '50%', h: '100%' },
+        text: 'Drop near the left edge to fill the left half. Top edge maximizes, bottom edge fills the bottom half, and corners fill a quarter.'
+      },
+      grid2: {
+        lines: '<div style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--accent)"></div>',
+        ghost: { l: '0%', t: '0%', w: '50%', h: '100%' },
+        text: 'Locked to 2 side by side. Drop inside a cell to fill it. Drop on the border between two cells and both cells fill.'
+      },
+      grid4: {
+        lines: '<div style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--accent)"></div><div style="position:absolute;top:50%;left:0;right:0;border-top:1px dashed var(--accent)"></div>',
+        ghost: { l: '50%', t: '0%', w: '50%', h: '50%' },
+        text: 'Locked to 2 × 2. Drop inside one cell to fill it. Where two borders cross, one cell fills. A drop never covers more than half the grid.'
+      }
+    };
+    function show(name) {
+      const v = views[name];
+      lines.innerHTML = v.lines;
+      ghost.style.left = v.ghost.l; ghost.style.top = v.ghost.t;
+      ghost.style.width = v.ghost.w; ghost.style.height = v.ghost.h;
+      caption.textContent = v.text;
+    }
+    document.querySelectorAll('#gridTabs span').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('#gridTabs span').forEach(function (t) { t.classList.remove('on'); });
+        tab.classList.add('on');
+        show(tab.dataset.view);
+      });
+    });
+    show('edge');
+  })();
+</script>
 </body>
 </html>
