@@ -4,361 +4,702 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LoomLayout – window manager for macOS</title>
-<meta name="description" content="LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging, remember where every window belongs for each display setup, and save named layouts. Everything stays on your Mac.">
+<meta name="description" content="LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging, remember where each window belongs for every display setup, and save named layouts. Everything stays on your Mac.">
+<meta name="theme-color" content="#0b0c12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0c12'/%3E%3Cpath d='M7 10h18M7 16h18M7 22h18' stroke='%23ffb86b' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #f6f6f4; --fg: #1d1d1f; --muted: #6b6b70; --card: #ffffff;
-    --accent: #3b5bdb; --accent-soft: #e7ecff; --accent-fg: #ffffff;
-    --border: #e4e4e0; --screen: #dfe3ea; --win: #ffffff; --win-line: #c9ced8;
-    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f0f12; --fg: #f5f5f7; --muted: #a1a1a8; --card: #18181d;
-      --accent: #748ffc; --accent-soft: #1f2540; --accent-fg: #0b0b0f;
-      --border: #2a2a31; --screen: #23232b; --win: #2e2e38; --win-line: #3b3b47;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #0f0f12; --fg: #f5f5f7; --muted: #a1a1a8; --card: #18181d;
-    --accent: #748ffc; --accent-soft: #1f2540; --accent-fg: #0b0b0f;
-    --border: #2a2a31; --screen: #23232b; --win: #2e2e38; --win-line: #3b3b47;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+    --ink: #f3f1ec;
+    --mute: #9a9aa6;
+    --dim: #5d5d6b;
+    --bg: #0b0c12;
+    --panel: #14151d;
+    --panel-2: #1b1d28;
+    --line: rgba(255,255,255,.08);
+    --amber: #ffb86b;
+    --amber-2: #ff8a5b;
+    --teal: #5ee6c8;
+    --violet: #a48bff;
+    --glow: 0 30px 80px -20px rgba(255,138,91,.25);
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--bg); color: var(--fg);
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    overflow-x: hidden;
   }
-  a { color: var(--accent); }
-  main { max-width: 980px; margin: 0 auto; padding: 0 20px 56px; }
-  section { padding: 56px 0 8px; }
-  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.05; margin: 0 0 14px; letter-spacing: -0.03em; }
-  h2 { font-size: clamp(1.5rem, 4vw, 2rem); letter-spacing: -0.02em; margin: 0 0 10px; }
-  h3 { font-size: 1.05rem; margin: 0 0 6px; }
-  p { margin: 0 0 14px; }
-  .lead { font-size: clamp(1.1rem, 2.4vw, 1.3rem); color: var(--muted); max-width: 640px; }
-  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .78rem; color: var(--accent); font-weight: 700; margin: 0 0 10px; }
-  .muted { color: var(--muted); }
-  code, kbd {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em;
-    background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px;
+  /* aurora + loom lines backdrop */
+  body::before {
+    content: ""; position: fixed; inset: -20% -10% auto -10%; height: 90vh; z-index: -2; pointer-events: none;
+    background:
+      radial-gradient(40% 50% at 20% 10%, rgba(255,138,91,.22), transparent 70%),
+      radial-gradient(35% 45% at 85% 5%, rgba(94,230,200,.14), transparent 70%),
+      radial-gradient(40% 50% at 60% 30%, rgba(164,139,255,.13), transparent 70%);
+    filter: blur(20px);
   }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+    background-image: repeating-linear-gradient(115deg, transparent 0 46px, rgba(255,255,255,.025) 46px 47px);
+  }
+  a { color: inherit; }
+  img, svg { display: block; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--amber); margin: 0 0 16px;
+  }
+  .eyebrow::before { content: ""; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+  h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -.025em; }
+  h1 { font-size: clamp(2.6rem, 7.4vw, 5.2rem); line-height: .98; }
+  h2 { font-size: clamp(1.9rem, 4.6vw, 3rem); line-height: 1.05; }
+  h3 { font-size: 1.12rem; letter-spacing: -.01em; }
+  p { margin: 0; }
+  .grad {
+    background: linear-gradient(100deg, var(--amber) 0%, var(--amber-2) 45%, var(--violet) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .mute { color: var(--mute); }
+  kbd {
+    font: 600 .82em/1 ui-monospace, "SF Mono", Menlo, monospace; display: inline-grid; place-items: center;
+    min-width: 1.9em; height: 1.9em; padding: 0 .45em; border-radius: 7px; color: var(--ink);
+    background: linear-gradient(#2a2d3b, #1b1d28); border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 2px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  /* nav */
+  .nav {
+    position: sticky; top: 0; z-index: 20; backdrop-filter: saturate(160%) blur(14px);
+    background: rgba(11,12,18,.6); border-bottom: 1px solid var(--line);
+  }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; letter-spacing: -.01em; }
+  .brand svg { width: 26px; height: 26px; }
+  .links { display: flex; gap: 22px; font-size: .92rem; color: var(--mute); }
+  .links a { text-decoration: none; }
+  .links a:hover { color: var(--ink); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 650; font-size: .93rem;
+    color: #15110c; background: linear-gradient(100deg, var(--amber), var(--amber-2));
+    padding: 10px 16px; border-radius: 999px; box-shadow: 0 8px 24px -8px rgba(255,138,91,.6); white-space: nowrap;
+  }
+  @media (max-width: 760px) { .links a:not(.pill) { display: none; } }
 
   /* hero */
-  .hero { padding-top: 64px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 26px 0 10px; }
+  .hero { padding: 84px 0 40px; text-align: left; }
+  .hero-grid { display: grid; gap: 40px; align-items: end; }
+  .lead { font-size: clamp(1.1rem, 2.2vw, 1.3rem); color: var(--mute); max-width: 36ch; margin-top: 22px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
   .btn {
-    display: inline-block; background: var(--accent); color: var(--accent-fg);
-    text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 12px;
+    display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650;
+    padding: 15px 24px; border-radius: 14px; transition: transform .2s ease, box-shadow .2s ease;
   }
-  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
-  .meta { font-size: .9rem; color: var(--muted); }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.primary { color: #15110c; background: linear-gradient(100deg, var(--amber), var(--amber-2)); box-shadow: var(--glow); }
+  .btn.ghost { color: var(--ink); border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .chip { font-size: .82rem; color: var(--mute); border: 1px solid var(--line); background: rgba(255,255,255,.025); padding: 6px 12px; border-radius: 999px; }
 
-  /* screen mockups */
-  .stage {
-    margin-top: 44px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 18px; padding: 22px; box-shadow: var(--shadow);
+  /* desk demo */
+  .desk-card {
+    position: relative; background: linear-gradient(180deg, #1a1c27, #11121a);
+    border: 1px solid var(--line); border-radius: 26px; padding: 14px; box-shadow: 0 40px 100px -30px rgba(0,0,0,.7);
   }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 6px 14px; }
+  .tab {
+    font: inherit; font-size: .84rem; color: var(--mute); background: transparent; border: 1px solid var(--line);
+    padding: 7px 13px; border-radius: 999px; cursor: pointer; transition: all .2s ease;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: #15110c; background: var(--amber); border-color: transparent; font-weight: 650; }
+  .desk {
+    position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden;
+    background: radial-gradient(120% 90% at 30% 0%, #2a2f48 0%, #13151f 60%, #0d0e15 100%);
+    border: 1px solid var(--line);
+  }
+  .menubar {
+    position: absolute; top: 0; left: 0; right: 0; height: 22px; z-index: 5; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 12px; font-size: 11px; color: rgba(255,255,255,.75);
+    background: rgba(10,11,16,.55); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  }
+  .menubar .ll { display: flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 650; }
+  .menubar .ll i { width: 9px; height: 9px; border-radius: 3px; background: linear-gradient(var(--amber), var(--amber-2)); display: inline-block; }
+  .menubar .sp { color: var(--mute); }
   .screen {
-    position: relative; aspect-ratio: 16 / 9; background: var(--screen);
-    border-radius: 10px; overflow: hidden;
+    position: absolute; top: 22px; bottom: 0; border-right: 1px solid rgba(255,255,255,.04);
+    transition: width .8s cubic-bezier(.2,.7,.2,1), opacity .6s ease;
   }
+  .laptop { left: 0; width: 100%; }
+  .external { left: 65%; width: 35%; opacity: 0; background: rgba(255,255,255,.02); }
+  .desk.dual .laptop { width: 62%; }
+  .desk.dual .external { opacity: 1; }
   .win {
-    position: absolute; background: var(--win); border: 1px solid var(--win-line);
-    border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12);
-    transition: all .6s ease;
+    position: absolute; z-index: 3; border-radius: 12px; overflow: hidden; background: #1d1f2b;
+    border: 1px solid rgba(255,255,255,.1); box-shadow: 0 18px 40px -14px rgba(0,0,0,.6);
+    transition: left .9s cubic-bezier(.2,.7,.2,1), top .9s cubic-bezier(.2,.7,.2,1), width .9s cubic-bezier(.2,.7,.2,1), height .9s cubic-bezier(.2,.7,.2,1);
   }
-  .win::before {
-    content: ""; display: block; height: 14px; border-bottom: 1px solid var(--win-line);
-    background: linear-gradient(var(--win), var(--win));
-    background-image: radial-gradient(circle, #ff5f57 0 3px, transparent 3.5px), radial-gradient(circle, #febc2e 0 3px, transparent 3.5px), radial-gradient(circle, #28c840 0 3px, transparent 3.5px);
-    background-size: 12px 12px; background-repeat: no-repeat; background-position: 6px 1px, 20px 1px, 34px 1px;
+  .win .bar {
+    height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 9px; font-size: 10.5px; color: var(--mute);
+    background: #242735; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; overflow: hidden;
   }
-  .ghostzone {
-    position: absolute; background: var(--accent-soft); border: 2px dashed var(--accent);
-    border-radius: 8px; opacity: .9;
+  .win .bar b { width: 7px; height: 7px; border-radius: 50%; background: #ff5f57; box-shadow: 11px 0 0 #febc2e, 22px 0 0 #28c840; margin-right: 26px; flex: none; }
+  .win .body {
+    position: absolute; inset: 22px 10px 10px; border-radius: 6px;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,.07) 0 6px, transparent 6px 16px);
+    opacity: .9;
   }
-  .caption { font-size: .92rem; color: var(--muted); margin-top: 14px; text-align: center; }
-  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-  .tabs span {
-    font-size: .85rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted);
+  #w1 .body { background: repeating-linear-gradient(180deg, rgba(255,184,107,.18) 0 6px, transparent 6px 16px); }
+  #w2 .body { background: repeating-linear-gradient(180deg, rgba(94,230,200,.16) 0 6px, transparent 6px 16px); }
+  #w3 .body { background: repeating-linear-gradient(180deg, rgba(164,139,255,.18) 0 6px, transparent 6px 16px); }
+  .ghost {
+    position: absolute; z-index: 2; border-radius: 14px; opacity: 0; transition: opacity .35s ease, left .3s, top .3s, width .3s, height .3s;
+    background: linear-gradient(135deg, rgba(255,184,107,.25), rgba(255,138,91,.12)); border: 1.5px dashed rgba(255,184,107,.9);
   }
-  .tabs span.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
+  .cursor {
+    position: absolute; z-index: 6; width: 16px; height: 16px; border-radius: 50%; opacity: 0;
+    transform: translate(-50%, -50%); background: #fff; box-shadow: 0 0 0 5px rgba(255,255,255,.18), 0 4px 12px rgba(0,0,0,.5);
+    transition: left 1.1s ease, top 1.1s ease, opacity .3s;
+  }
+  .keys {
+    position: absolute; z-index: 7; left: 50%; bottom: 16px; transform: translateX(-50%);
+    display: flex; gap: 6px; min-height: 30px; align-items: center;
+  }
+  .keys kbd { font-size: 13px; min-width: 2.2em; height: 2.2em; background: linear-gradient(#ffb86b, #ff8a5b); color: #1a0f08; border-color: transparent; }
+  .caption { min-height: 48px; margin: 16px 6px 4px; text-align: center; color: var(--mute); font-size: .98rem; }
+  .caption strong { color: var(--ink); font-weight: 600; }
+  .presets { display: none; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .presets.show { display: flex; }
+  .presets button { font: inherit; font-size: .84rem; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+  .presets button:hover { border-color: var(--amber); }
 
-  /* cards */
-  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 28px; }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
-  }
-  .card p { color: var(--muted); font-size: .97rem; margin: 0; }
-  .card .ico {
-    width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
-    display: grid; place-items: center; font-weight: 700; margin-bottom: 14px;
-  }
+  /* sections */
+  section { padding: 96px 0 0; }
+  .sec-head { display: grid; gap: 14px; max-width: 640px; margin-bottom: 40px; }
+  .sec-head p { color: var(--mute); font-size: 1.05rem; }
 
-  /* steps */
-  .steps { counter-reset: s; display: grid; gap: 14px; margin-top: 26px; }
-  .step {
-    display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--card);
-    border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px;
+  /* bento features */
+  .bento { display: grid; gap: 14px; grid-template-columns: repeat(6, 1fr); }
+  .tile {
+    grid-column: span 2; position: relative; overflow: hidden; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 22px; padding: 26px; min-height: 230px; transition: transform .3s ease, border-color .3s ease;
   }
-  .step .n {
-    width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-fg);
-    display: grid; place-items: center; font-weight: 700;
-  }
-  .step p { color: var(--muted); margin: 0; font-size: .97rem; }
+  .tile:hover { transform: translateY(-3px); border-color: rgba(255,184,107,.35); }
+  .tile.wide { grid-column: span 4; }
+  .tile p { color: var(--mute); margin-top: 8px; font-size: .97rem; max-width: 42ch; }
+  .tile .num { font: 600 .8rem ui-monospace, Menlo, monospace; color: var(--amber); letter-spacing: .08em; }
+  .tile .vis { position: absolute; right: -10px; bottom: -10px; width: 46%; height: 60%; opacity: .95; }
+  @media (max-width: 860px) { .bento { grid-template-columns: 1fr 1fr; } .tile, .tile.wide { grid-column: span 2; } }
+  @media (max-width: 560px) { .bento { grid-template-columns: 1fr; } .tile, .tile.wide { grid-column: span 1; } }
 
-  /* shortcuts table */
-  .table-wrap { overflow-x: auto; margin-top: 22px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
-  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-  tr:last-child td { border-bottom: 0; }
-  td.keys { white-space: nowrap; font-family: ui-monospace, Menlo, monospace; }
+  /* mini mockups */
+  .mini { display: grid; gap: 4px; width: 100%; height: 100%; }
+  .mini b {
+    display: block; border-radius: 6px; background: linear-gradient(160deg, #2a2e42, #1c1f2c); border: 1px solid rgba(255,255,255,.08);
+    font-size: 9px; font-weight: 600; color: var(--mute); padding: 5px 6px; letter-spacing: .02em;
+  }
+  .mini b.a { background: linear-gradient(160deg, rgba(255,184,107,.35), rgba(255,138,91,.18)); color: var(--ink); }
+  .mini b.t { background: linear-gradient(160deg, rgba(94,230,200,.3), rgba(94,230,200,.1)); color: var(--ink); }
+  .mini b.v { background: linear-gradient(160deg, rgba(164,139,255,.3), rgba(164,139,255,.1)); color: var(--ink); }
+
+  /* examples */
+  .examples { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
+  .example {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .example .frame { aspect-ratio: 16/10; background: #0f1017; border-radius: 14px; padding: 8px; border: 1px solid var(--line); }
+  .example h3 { margin-top: 2px; }
+  .example p { color: var(--mute); font-size: .95rem; }
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ba .frame { position: relative; }
+  .ba .tag { position: absolute; top: -9px; left: 10px; font-size: .68rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: #15110c; background: var(--mute); border-radius: 6px; padding: 2px 6px; }
+  .ba .tag.on { background: var(--teal); }
+  .messy b { position: absolute; }
+  @media (max-width: 900px) { .examples { grid-template-columns: 1fr; } }
+
+  /* shortcuts */
+  .keycards { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
+  .kc { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+  .kc .combo { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+  .kc p { color: var(--mute); font-size: .93rem; }
+  .kc:hover { border-color: rgba(94,230,200,.35); }
+  .more { margin-top: 20px; font-size: .95rem; color: var(--mute); }
+  .more a { color: var(--teal); text-decoration: none; border-bottom: 1px solid rgba(94,230,200,.4); }
+  @media (max-width: 960px) { .keycards { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .keycards { grid-template-columns: 1fr; } }
 
   /* privacy */
-  .privacy { background: var(--accent-soft); border-radius: 18px; padding: 26px; margin-top: 26px; }
-  .privacy ul { margin: 0; padding-left: 20px; }
-  .privacy li { margin-bottom: 8px; }
+  .privacy {
+    display: grid; gap: 14px; grid-template-columns: 1.2fr 1fr 1fr; align-items: stretch;
+  }
+  .priv { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 24px; }
+  .priv .big { font-size: 2.2rem; font-weight: 700; letter-spacing: -.03em; color: var(--teal); }
+  .priv p { color: var(--mute); font-size: .95rem; margin-top: 8px; }
+  .priv.hero-p { background: linear-gradient(160deg, rgba(94,230,200,.16), rgba(94,230,200,.04)); border-color: rgba(94,230,200,.25); }
+  @media (max-width: 860px) { .privacy { grid-template-columns: 1fr; } }
 
   /* faq */
-  details { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-top: 10px; }
-  summary { cursor: pointer; font-weight: 600; }
-  details p { color: var(--muted); margin: 10px 0 0; font-size: .97rem; }
+  .faq { display: grid; gap: 10px; max-width: 820px; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 1.3rem; color: var(--amber); }
+  details[open] summary::after { content: "–"; }
+  details p { color: var(--mute); margin-top: 12px; font-size: .97rem; }
 
-  .cta { text-align: center; padding: 64px 0 8px; }
-  .cta p { color: var(--muted); }
-  footer { color: var(--muted); font-size: .88rem; border-top: 1px solid var(--border); margin-top: 48px; padding-top: 20px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; }
+  /* cta + footer */
+  .cta {
+    margin-top: 110px; text-align: center; padding: 70px 22px; border-radius: 32px; position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #1f1b2e, #14151d 60%); border: 1px solid var(--line);
+  }
+  .cta::before {
+    content: ""; position: absolute; left: 50%; top: -60%; width: 900px; height: 700px; transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(255,138,91,.35), transparent); pointer-events: none;
+  }
+  .cta h2, .cta p { position: relative; }
+  .cta p { color: var(--mute); margin: 14px 0 28px; }
+  .cta .actions { justify-content: center; }
+  .foot { margin: 60px 0 30px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; color: var(--dim); font-size: .9rem; }
+  .foot a { color: var(--mute); text-decoration: none; }
+  .foot a:hover { color: var(--ink); }
 
+  @media (min-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 560px) {
-    main { padding: 0 16px 48px; }
-    .hero { padding-top: 40px; }
-    .stage { padding: 14px; }
+    .hero { padding-top: 56px; }
+    .desk-card { padding: 8px; border-radius: 20px; }
+    .win .bar b { margin-right: 22px; }
+    .cta { padding: 52px 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
   }
 </style>
 </head>
 <body>
-<main>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="LoomLayout home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#14151d"/><path d="M7 10h18M7 16h18M7 22h18" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round"/><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ffb86b"/><stop offset="1" stop-color="#ff8a5b"/></linearGradient></defs></svg>
+      LoomLayout
+    </a>
+    <div class="links">
+      <a href="#demo">Demo</a>
+      <a href="#features">Features</a>
+      <a href="#examples">Examples</a>
+      <a href="#shortcuts">Shortcuts</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="pill" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download</a>
+  </div>
+</nav>
+
+<main id="top" class="wrap">
 
   <!-- HERO -->
   <section class="hero">
-    <p class="eyebrow">Window manager for macOS</p>
-    <h1>Put every window exactly where it belongs.</h1>
-    <p class="lead">LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging them, let it remember where each window goes for every display setup, and bring back a named layout in one keystroke.</p>
-    <div class="actions">
-      <a class="btn" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download for macOS</a>
-      <a class="btn ghost" href="#how">See how it works</a>
-    </div>
-    <p class="meta">Version 1.0.0 · macOS 13 (Ventura) or later · free · nothing leaves your Mac</p>
-
-    <div class="stage" aria-label="Animated demo of snapping a window to the left half">
-      <div class="screen" id="demo">
-        <div class="win" id="demoWin" style="left:6%;top:12%;width:44%;height:70%;"></div>
-        <div class="win" style="left:54%;top:12%;width:40%;height:34%;"></div>
-        <div class="win" style="left:54%;top:50%;width:40%;height:32%;"></div>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Window manager for macOS</p>
+        <h1>Every window,<br><span class="grad">exactly where it belongs.</span></h1>
+        <p class="lead">LoomLayout lives in your menu bar. Snap windows with a keystroke or a drag, remember each display setup, and bring back a named layout in one shortcut.</p>
+        <div class="actions">
+          <a class="btn primary" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">
+            Download for macOS
+          </a>
+          <a class="btn ghost" href="#demo">Watch the demo</a>
+        </div>
+        <div class="chips">
+          <span class="chip">macOS 13 Ventura or later</span>
+          <span class="chip">Accessibility only</span>
+          <span class="chip">Nothing leaves your Mac</span>
+          <span class="chip">Version 1.0.0</span>
+        </div>
       </div>
-      <p class="caption" id="demoCaption">Press ⌃⌥← and the window moves to the left half.</p>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section id="demo">
+    <div class="sec-head">
+      <p class="eyebrow">See it work</p>
+      <h2>Watch a desk come together.</h2>
+      <p>Pick a scene. The demo plays the same keystrokes and drags you'd use on your own Mac.</p>
+    </div>
+
+    <div class="desk-card">
+      <div class="tabs" role="tablist" aria-label="Demo scenes">
+        <button class="tab" role="tab" aria-selected="true" data-scene="keys">Keyboard snap</button>
+        <button class="tab" role="tab" aria-selected="false" data-scene="drag">Drag to snap</button>
+        <button class="tab" role="tab" aria-selected="false" data-scene="displays">Display memory</button>
+        <button class="tab" role="tab" aria-selected="false" data-scene="layouts">Named layouts</button>
+      </div>
+
+      <div class="desk" id="desk">
+        <div class="menubar" aria-hidden="true">
+          <span class="ll"><i></i>LoomLayout</span>
+          <span class="sp">Layouts · Settings</span>
+        </div>
+        <div class="screen laptop" aria-hidden="true"></div>
+        <div class="screen external" aria-hidden="true"></div>
+
+        <div class="win" id="w1" style="left:16%;top:22%;width:44%;height:56%"><div class="bar"><b></b>Browser</div><div class="body"></div></div>
+        <div class="win" id="w2" style="left:64%;top:12%;width:30%;height:40%"><div class="bar"><b></b>Notes</div><div class="body"></div></div>
+        <div class="win" id="w3" style="left:62%;top:58%;width:32%;height:30%"><div class="bar"><b></b>Editor</div><div class="body"></div></div>
+
+        <div class="ghost" id="ghost" style="left:0;top:0;width:50%;height:100%"></div>
+        <div class="cursor" id="cursor" style="left:50%;top:50%"></div>
+        <div class="keys" id="keys" aria-live="polite"></div>
+      </div>
+
+      <p class="caption" id="caption"><strong>Keyboard snap:</strong> one shortcut moves the focused window.</p>
+      <div class="presets" id="presets">
+        <button data-layout="coding">Coding</button>
+        <button data-layout="meeting">Meeting</button>
+        <button data-layout="writing">Writing</button>
+      </div>
     </div>
   </section>
 
   <!-- FEATURES -->
   <section id="features">
-    <p class="eyebrow">What it does</p>
-    <h2>Six things that save you a lot of dragging.</h2>
-    <p class="muted">Each one works on its own. Together they keep your desk the same, every day.</p>
-    <div class="grid">
-      <div class="card"><div class="ico">⌨</div><h3>Keyboard snapping</h3><p>Halves, quarters, thirds, maximize, center, and the previous size. One shortcut per placement, and every shortcut can be changed.</p></div>
-      <div class="card"><div class="ico">⇲</div><h3>Drag to snap</h3><p>Drag a window to an edge or corner. A preview shows where it will land before you let go. Turn it off if you don't want it.</p></div>
-      <div class="card"><div class="ico">▦</div><h3>Locked grid</h3><p>Lock a screen to a grid of 2 side by side, 2 stacked, 2 × 2, or your own split. Drop a window on one cell, or on the border between two.</p></div>
-      <div class="card"><div class="ico">⟲</div><h3>Remembers your layout</h3><p>Each display setup keeps its own memory. Unplug your external monitor and reconnect it later, and your windows come back where they were.</p></div>
-      <div class="card"><div class="ico">★</div><h3>Named layouts</h3><p>Save an arrangement under a name, restore it from the menu, or let it restore automatically when a display setup connects.</p></div>
-      <div class="card"><div class="ico">⇥</div><h3>Window switcher</h3><p>An alt-tab style switcher that lists windows by most recently used. Hold ⌃⌥ and press Tab to move through them.</p></div>
+    <div class="sec-head">
+      <p class="eyebrow">What it does</p>
+      <h2>Six things you stop doing by hand.</h2>
+      <p>Each one works on its own. Together, your desk looks the way you left it, every day.</p>
+    </div>
+
+    <div class="bento">
+      <article class="tile wide">
+        <span class="num">01</span>
+        <h3 style="margin-top:12px">Keyboard snapping</h3>
+        <p>Halves, quarters, thirds, maximize, center, and back to the previous size. Move a window to another display with one shortcut. Every key can be changed in Settings.</p>
+        <div class="vis" aria-hidden="true">
+          <div class="mini" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">
+            <b class="a" style="grid-row:1/3">Left half</b><b>Top right</b><b>Bottom right</b>
+          </div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="num">02</span>
+        <h3 style="margin-top:12px">Drag to snap</h3>
+        <p>Drop a window on an edge or corner. A preview shows where it lands before you let go.</p>
+      </article>
+      <article class="tile">
+        <span class="num">03</span>
+        <h3 style="margin-top:12px">Locked grid</h3>
+        <p>Lock a screen to 2 side by side, 2 stacked, a 2 × 2 grid, or your own split. Drop on a cell or on a border between two.</p>
+      </article>
+      <article class="tile wide">
+        <span class="num">04</span>
+        <h3 style="margin-top:12px">Remembers each display setup</h3>
+        <p>"MacBook alone" and "MacBook + monitor" are separate memories. Unplug the monitor, plug it back in, and your windows return to the spots they had.</p>
+        <div class="vis" aria-hidden="true">
+          <div class="mini" style="grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;opacity:.9">
+            <b class="t" style="grid-row:1/3">Editor</b><b>Chat</b><b>Docs</b>
+          </div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="num">05</span>
+        <h3 style="margin-top:12px">Named layouts</h3>
+        <p>Save an arrangement under a name. Restore it from the menu, or let it come back automatically when a display setup connects.</p>
+      </article>
+      <article class="tile">
+        <span class="num">06</span>
+        <h3 style="margin-top:12px">Window switcher</h3>
+        <p>An alt-tab style switcher that lists windows by most recently used. Hold ⌃⌥ and tap Tab to move through them.</p>
+      </article>
     </div>
   </section>
 
-  <!-- DRAG & GRID -->
-  <section id="grid">
-    <p class="eyebrow">Dragging</p>
-    <h2>Drag, and the screen tells you where it will land.</h2>
-    <p class="muted">Start dragging by a window's title bar. Move toward an edge or a corner and a preview shows the result. Releasing applies it.</p>
-
-    <div class="tabs" id="gridTabs">
-      <span class="on" data-view="edge">Edges &amp; corners</span>
-      <span data-view="grid2">Locked: 2 side by side</span>
-      <span data-view="grid4">Locked: 2 × 2</span>
+  <!-- EXAMPLES -->
+  <section id="examples">
+    <div class="sec-head">
+      <p class="eyebrow">Examples</p>
+      <h2>Three ways people use it.</h2>
+      <p>Pick the setup that matches your day. LoomLayout puts the windows back in place.</p>
     </div>
-    <div class="stage">
-      <div class="screen" id="gridScreen">
-        <div id="gridLines"></div>
-        <div class="ghostzone" id="ghost"></div>
-      </div>
-      <p class="caption" id="gridCaption">Drop near the left edge to fill the left half. Top edge maximizes, bottom edge fills the bottom half, and corners fill a quarter.</p>
-    </div>
-  </section>
 
-  <!-- HOW -->
-  <section id="how">
-    <p class="eyebrow">Getting started</p>
-    <h2>Up and running in about two minutes.</h2>
-    <div class="steps">
-      <div class="step"><div class="n">1</div><div><h3>Install</h3><p>Open <code>LoomLayout-1.0.0.dmg</code> and drag LoomLayout into Applications. Start it from there. The first time, right-click it and choose <strong>Open</strong> if macOS blocks it, because this build isn't notarized.</p></div></div>
-      <div class="step"><div class="n">2</div><div><h3>Allow Accessibility</h3><p>LoomLayout moves other apps' windows, so macOS needs your permission. Go to <em>System Settings → Privacy &amp; Security → Accessibility</em>, turn LoomLayout on, then quit and reopen it. This is the only permission it asks for.</p></div></div>
-      <div class="step"><div class="n">3</div><div><h3>Try a shortcut</h3><p>Click a window and press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd>. It moves to the left half. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Return</kbd> to maximize it.</p></div></div>
-      <div class="step"><div class="n">4</div><div><h3>Tune it</h3><p>Open LoomLayout's menu bar icon, then <strong>Settings</strong>. Pick a grid for each screen under <em>Setup</em>, change any shortcut under <em>Shortcuts</em>, and decide which apps it remembers under <em>Apps</em>.</p></div></div>
+    <div class="examples">
+      <article class="example">
+        <div class="ba">
+          <div class="frame messy" style="position:relative">
+            <span class="tag">Before</span>
+            <b style="left:8%;top:14%;width:52%;height:50%;transform:rotate(-2deg);border-radius:6px;background:#23263a;font-size:9px;padding:5px;color:var(--mute)">Editor</b>
+            <b style="left:44%;top:30%;width:50%;height:46%;transform:rotate(3deg);border-radius:6px;background:#23263a;font-size:9px;padding:5px;color:var(--mute)">Browser</b>
+            <b style="left:20%;top:52%;width:40%;height:36%;transform:rotate(-1deg);border-radius:6px;background:#23263a;font-size:9px;padding:5px;color:var(--mute)">Notes</b>
+          </div>
+          <div class="frame">
+            <span class="tag on">After</span>
+            <div class="mini" style="grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr">
+              <b class="a" style="grid-row:1/3">Editor</b><b class="t">Browser</b><b class="v">Notes</b>
+            </div>
+          </div>
+        </div>
+        <h3>Coding</h3>
+        <p>Editor on the left, browser and notes stacked on the right. Save it once as a named layout, then restore it in one step.</p>
+      </article>
+
+      <article class="example">
+        <div class="frame">
+          <div class="mini" style="grid-template-columns:7fr 3fr;grid-template-rows:1fr 1fr">
+            <b class="a" style="grid-row:1/3">Video call</b><b class="t">Notes</b><b class="v">Chat</b>
+          </div>
+        </div>
+        <h3>Meetings</h3>
+        <p>The call takes most of the screen, notes sit beside it. Choose the "Meeting" layout and everything is placed at once.</p>
+      </article>
+
+      <article class="example">
+        <div class="ba">
+          <div class="frame">
+            <span class="tag">Undocked</span>
+            <div class="mini" style="grid-template-columns:1fr;grid-template-rows:1fr">
+              <b class="a">Laptop screen, everything squeezed</b>
+            </div>
+          </div>
+          <div class="frame">
+            <span class="tag on">Docked</span>
+            <div class="mini" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr">
+              <b class="a" style="grid-row:1/3">Editor</b><b class="t">Browser</b><b class="v">Notes</b>
+            </div>
+          </div>
+        </div>
+        <h3>Docking</h3>
+        <p>Plug in your monitor and every window goes back to where it was. No dragging after every meeting or desk change.</p>
+      </article>
     </div>
   </section>
 
   <!-- SHORTCUTS -->
   <section id="shortcuts">
-    <p class="eyebrow">Shortcuts</p>
-    <h2>Default shortcuts</h2>
-    <p class="muted">⌃ is Control, ⌥ is Option, ⇧ is Shift, ⌘ is Command. Change any of them in Settings → Shortcuts. A shortcut must include ⌃, ⌥ or ⌘, and conflicts are refused with the name of the action that already uses the key.</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Action</th><th>Default</th></tr></thead>
-        <tbody>
-          <tr><td>Left half / right half</td><td class="keys">⌃⌥← / ⌃⌥→</td></tr>
-          <tr><td>Top half / bottom half</td><td class="keys">⌃⌥↑ / ⌃⌥↓</td></tr>
-          <tr><td>Top-left / top-right quarter</td><td class="keys">⌃⌥U / ⌃⌥I</td></tr>
-          <tr><td>Bottom-left / bottom-right quarter</td><td class="keys">⌃⌥J / ⌃⌥K</td></tr>
-          <tr><td>Left / center / right third</td><td class="keys">⌃⌥D / ⌃⌥G / ⌃⌥E</td></tr>
-          <tr><td>Maximize</td><td class="keys">⌃⌥Return</td></tr>
-          <tr><td>Center</td><td class="keys">⌃⌥C</td></tr>
-          <tr><td>Previous size and position</td><td class="keys">⌃⌥Delete</td></tr>
-          <tr><td>Move to previous / next display</td><td class="keys">⌃⌥⌘← / ⌃⌥⌘→</td></tr>
-          <tr><td>Remembered slot 1–4</td><td class="keys">⌃⌥1 … ⌃⌥4</td></tr>
-          <tr><td>Split into 2 side by side / 2 stacked</td><td class="keys">⌃⌥⇧H / ⌃⌥⇧V</td></tr>
-          <tr><td>Split into 4 (2 × 2)</td><td class="keys">⌃⌥Q</td></tr>
-          <tr><td>No split</td><td class="keys">⌃⌥⇧F</td></tr>
-          <tr><td>Save / restore remembered positions</td><td class="keys">⌃⌥S / ⌃⌥R</td></tr>
-          <tr><td>Save named layout</td><td class="keys">⌃⌥⇧S</td></tr>
-          <tr><td>Window switcher: next / previous</td><td class="keys">⌃⌥Tab / ⌃⌥⇧Tab</td></tr>
-        </tbody>
-      </table>
+    <div class="sec-head">
+      <p class="eyebrow">Shortcuts</p>
+      <h2>Keys you'll remember in a day.</h2>
+      <p>⌃ Control · ⌥ Option · ⇧ Shift · ⌘ Command. Every default is changeable in Settings → Shortcuts.</p>
     </div>
-    <p class="muted" style="margin-top:12px;font-size:.92rem">In the switcher, Tab or the arrow keys move the selection, Return or a click picks a window, Esc cancels, and releasing ⌃ or ⌥ picks the highlighted window.</p>
+
+    <div class="keycards">
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd></div><h3>Left half</h3><p>Right half is ⌃⌥→.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd></div><h3>Maximize</h3><p>Fills the screen.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>U</kbd></div><h3>Top-left quarter</h3><p>Corners: U, I, J, K.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>C</kbd></div><h3>Center</h3><p>Centers the window at its size.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>H</kbd></div><h3>Split in two</h3><p>Side by side. ⌃⌥⇧V stacks them.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd></div><h3>Split in four</h3><p>A 2 × 2 grid on the screen.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>S</kbd></div><h3>Save layout</h3><p>Name it and it's ready to restore.</p></div>
+      <div class="kc"><div class="combo"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>Tab</kbd></div><h3>Window switcher</h3><p>Most recently used first.</p></div>
+    </div>
+    <p class="more">Also included: remembered slots 1–4 (⌃⌥1 … ⌃⌥4), save and restore positions, and moving windows between displays. Conflicts are refused with the name of the action that already uses the key.</p>
   </section>
 
   <!-- PRIVACY -->
   <section id="privacy">
-    <p class="eyebrow">Your data</p>
-    <h2>Everything stays on your Mac.</h2>
-    <p class="muted">LoomLayout has no account and sends nothing to anyone, as described in its privacy policy.</p>
+    <div class="sec-head">
+      <p class="eyebrow">Your data</p>
+      <h2>Your desk stays yours.</h2>
+      <p>No account, no analytics, no sign-in. Settings and layouts live in files on your Mac.</p>
+    </div>
     <div class="privacy">
-      <ul>
-        <li><strong>Layouts and settings</strong> are saved in <code>~/Library/Application Support/MagicTab/state.json</code>. A damaged file is kept as a backup, never deleted.</li>
-        <li><strong>The placement log</strong> (<code>~/Library/Logs/MagicTab/placements.csv</code>) records app IDs and window rectangles only. It never contains window titles, and it's rotated at 1 MB. Delete it any time.</li>
-        <li><strong>Permissions:</strong> only Accessibility, which is needed to move windows.</li>
-      </ul>
+      <div class="priv hero-p">
+        <div class="big">0</div>
+        <p>bytes sent anywhere. LoomLayout sends nothing to anyone, as described in its privacy policy.</p>
+      </div>
+      <div class="priv">
+        <div class="big" style="color:var(--amber)">1</div>
+        <p>permission: Accessibility, which is needed to move other apps' windows. Nothing else is requested.</p>
+      </div>
+      <div class="priv">
+        <div class="big" style="color:var(--violet)">0</div>
+        <p>window titles in the placement log. It records app IDs and window rectangles only, and rotates at 1 MB.</p>
+      </div>
     </div>
   </section>
 
   <!-- FAQ -->
   <section id="faq">
-    <p class="eyebrow">Questions</p>
-    <h2>Common questions</h2>
-    <details>
-      <summary>The menu bar icon shows, but nothing happens.</summary>
-      <p>Accessibility access isn't granted for this copy. Open System Settings → Privacy &amp; Security → Accessibility. If LoomLayout is listed but still asks for access, remove it with <strong>−</strong>, add <code>/Applications/LoomLayout.app</code> with <strong>+</strong>, turn it on, and reopen LoomLayout.</p>
-    </details>
-    <details>
-      <summary>I updated LoomLayout and it asked for Accessibility again.</summary>
-      <p>Each new build has a new signature, and macOS treats it as a different app. Approve the copy in Applications again.</p>
-    </details>
-    <details>
-      <summary>A window doesn't move, or lands somewhere unexpected.</summary>
-      <p>Check Settings → Apps. An app switched off with <strong>Remember here</strong> won't be placed. Some apps also have a minimum window size, and a snap smaller than that leaves the window at its minimum.</p>
-    </details>
-    <details>
-      <summary>A shortcut does nothing.</summary>
-      <p>Another app may already use that combination. Choose a different shortcut in Settings → Shortcuts.</p>
-    </details>
-    <details>
-      <summary>What doesn't it do?</summary>
-      <p>Windows on other Spaces and in full-screen mode aren't moved. Dragging starts from the title bar (the top 80 points of a window). ⌘Tab stays with macOS. Shortcuts are single key presses, so true two-key chords aren't used.</p>
-    </details>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta">
-    <h2>Give your windows a home.</h2>
-    <p>Download LoomLayout for macOS 13 or later.</p>
-    <div class="actions" style="justify-content:center">
-      <a class="btn" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download LoomLayout 1.0.0</a>
+    <div class="sec-head">
+      <p class="eyebrow">Questions</p>
+      <h2>Quick answers.</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>The menu bar icon shows, but nothing happens.</summary>
+        <p>Accessibility access isn't granted for this copy. Open System Settings → Privacy &amp; Security → Accessibility. If LoomLayout is listed but still asks, remove it with −, add <code>/Applications/LoomLayout.app</code> with +, turn it on, and reopen LoomLayout.</p>
+      </details>
+      <details>
+        <summary>macOS says the app can't be opened.</summary>
+        <p>This build isn't notarized yet. Right-click LoomLayout in Applications and choose <strong>Open</strong>, then confirm once.</p>
+      </details>
+      <details>
+        <summary>I updated LoomLayout and it asked for Accessibility again.</summary>
+        <p>Each new build has a new signature, so macOS treats it as a different app. Approve the copy in Applications again.</p>
+      </details>
+      <details>
+        <summary>A window doesn't move, or lands somewhere unexpected.</summary>
+        <p>Check Settings → Apps. An app switched off under <strong>Remember here</strong> won't be placed. Some apps also have a minimum window size, and a snap smaller than that leaves the window at its minimum.</p>
+      </details>
+      <details>
+        <summary>What doesn't it do?</summary>
+        <p>Windows on other Spaces and in full-screen mode aren't moved. Dragging starts from the title bar (the top 80 points of a window). ⌘Tab stays with macOS. Shortcuts are single key presses, so true two-key chords aren't used.</p>
+      </details>
     </div>
   </section>
 
-  <footer>
+  <!-- CTA -->
+  <section>
+    <div class="cta">
+      <h2>Give your windows a home.</h2>
+      <p>LoomLayout 1.0.0 for macOS 13 Ventura or later.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download LoomLayout</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
     <span>© LoomLayout</span>
-    <span><a href="https://github.com/grgurculina/loom-layout-site/releases">All releases</a> · <a href="https://github.com/grgurculina/loom-layout-site">Source of this page</a></span>
+    <span><a href="https://github.com/grgurculina/loom-layout-site/releases">Releases</a> · <a href="https://github.com/grgurculina/loom-layout-site">Source of this page</a></span>
   </footer>
 
 </main>
 
 <script>
-  // Hero demo: cycle a window through three placements.
-  (function () {
-    const win = document.getElementById('demoWin');
-    const caption = document.getElementById('demoCaption');
-    const steps = [
-      { l: '6%', t: '12%', w: '44%', h: '70%', c: 'Press ⌃⌥← and the window moves to the left half.' },
-      { l: '54%', t: '12%', w: '40%', h: '70%', c: 'Press ⌃⌥→ and it moves to the right half.' },
-      { l: '0%', t: '0%', w: '100%', h: '100%', c: 'Press ⌃⌥Return and it maximizes.' }
-    ];
-    let i = 0;
-    function apply() {
-      const s = steps[i];
-      win.style.left = s.l; win.style.top = s.t; win.style.width = s.w; win.style.height = s.h;
-      caption.textContent = s.c;
-      i = (i + 1) % steps.length;
-    }
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setInterval(apply, 2400);
-    }
-  })();
+(function () {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const desk = document.getElementById('desk');
+  const caption = document.getElementById('caption');
+  const keys = document.getElementById('keys');
+  const cursor = document.getElementById('cursor');
+  const ghost = document.getElementById('ghost');
+  const presets = document.getElementById('presets');
+  const W = { w1: document.getElementById('w1'), w2: document.getElementById('w2'), w3: document.getElementById('w3') };
 
-  // Grid section: switch between edge snapping and locked grids.
-  (function () {
-    const screen = document.getElementById('gridScreen');
-    const lines = document.getElementById('gridLines');
-    const ghost = document.getElementById('ghost');
-    const caption = document.getElementById('gridCaption');
-    const views = {
-      edge: {
-        lines: '',
-        ghost: { l: '0%', t: '0%', w: '50%', h: '100%' },
-        text: 'Drop near the left edge to fill the left half. Top edge maximizes, bottom edge fills the bottom half, and corners fill a quarter.'
+  // rect = [left%, top%, width%, height%] of the desk
+  function place(el, r) {
+    el.style.left = r[0] + '%'; el.style.top = r[1] + '%';
+    el.style.width = r[2] + '%'; el.style.height = r[3] + '%';
+  }
+  function say(html) { caption.innerHTML = html; }
+  function showKeys(list) { keys.innerHTML = list.map(k => '<kbd>' + k + '</kbd>').join(''); }
+  function setDual(on) { desk.classList.toggle('dual', on); }
+  function showGhost(r) {
+    place(ghost, r);
+  }
+
+  let timers = [];
+  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function stop() { timers.forEach(clearTimeout); timers = []; }
+
+  const LAYOUTS = {
+    coding:  { w3: [1, 2, 60, 96], w1: [63, 2, 36, 47], w2: [63, 51, 36, 47] },
+    meeting: { w1: [1, 2, 70, 96], w2: [73, 2, 26, 47], w3: [73, 51, 26, 47] },
+    writing: { w2: [1, 2, 64, 96], w1: [67, 2, 32, 46], w3: [67, 50, 32, 48] }
+  };
+  const LAYOUT_TEXT = {
+    coding: '<strong>Coding layout:</strong> editor on the left, browser and notes stacked on the right.',
+    meeting: '<strong>Meeting layout:</strong> the browser takes most of the screen, notes and editor sit beside it.',
+    writing: '<strong>Writing layout:</strong> notes take the left side, browser and editor stack on the right.'
+  };
+  function applyLayout(name) {
+    const L = LAYOUTS[name];
+    Object.keys(L).forEach(id => place(W[id], L[id]));
+    say(LAYOUT_TEXT[name]);
+  }
+
+  const SCENES = {
+    keys: {
+      caption: '<strong>Keyboard snap:</strong> one shortcut moves the focused window.',
+      period: 8200,
+      reset() {
+        setDual(false); showKeys([]);
+        place(W.w1, [16, 22, 44, 56]); place(W.w2, [64, 12, 30, 40]); place(W.w3, [62, 58, 32, 30]);
+        ghost.style.opacity = 0; cursor.style.opacity = 0;
       },
-      grid2: {
-        lines: '<div style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--accent)"></div>',
-        ghost: { l: '0%', t: '0%', w: '50%', h: '100%' },
-        text: 'Locked to 2 side by side. Drop inside a cell to fill it. Drop on the border between two cells and both cells fill.'
+      frames: [
+        [400,  () => { showKeys(['⌃', '⌥', '←']); place(W.w1, [1, 2, 48, 96]); say('<strong>Left half.</strong> One shortcut, no dragging.'); }],
+        [2400, () => { showKeys(['⌃', '⌥', '→']); place(W.w1, [51, 2, 48, 96]); say('<strong>Right half.</strong> The same window, moved across.'); }],
+        [4400, () => { showKeys(['⌃', '⌥', '↩']); place(W.w1, [1, 2, 98, 96]); say('<strong>Maximize.</strong> Back to full screen when you need it.'); }],
+        [6400, () => { showKeys(['⌃', '⌥', 'C']); place(W.w1, [28, 22, 44, 56]); say('<strong>Center.</strong> Keeps the size, moves to the middle.'); }]
+      ]
+    },
+    drag: {
+      caption: '<strong>Drag to snap:</strong> grab a window by its title bar.',
+      period: 7600,
+      reset() {
+        setDual(false); showKeys([]);
+        place(W.w1, [3, 6, 30, 40]); place(W.w2, [40, 30, 36, 46]); place(W.w3, [66, 60, 30, 30]);
+        showGhost([0, 0, 50, 100]); ghost.style.opacity = 0;
+        cursor.style.transition = 'none'; cursor.style.left = '58%'; cursor.style.top = '36%'; cursor.style.opacity = 0;
+        void cursor.offsetWidth; cursor.style.transition = '';
       },
-      grid4: {
-        lines: '<div style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--accent)"></div><div style="position:absolute;top:50%;left:0;right:0;border-top:1px dashed var(--accent)"></div>',
-        ghost: { l: '50%', t: '0%', w: '50%', h: '50%' },
-        text: 'Locked to 2 × 2. Drop inside one cell to fill it. Where two borders cross, one cell fills. A drop never covers more than half the grid.'
-      }
-    };
-    function show(name) {
-      const v = views[name];
-      lines.innerHTML = v.lines;
-      ghost.style.left = v.ghost.l; ghost.style.top = v.ghost.t;
-      ghost.style.width = v.ghost.w; ghost.style.height = v.ghost.h;
-      caption.textContent = v.text;
+      frames: [
+        [400,  () => { cursor.style.opacity = 1; say('<strong>Grab</strong> a window by its title bar.'); }],
+        [900,  () => { cursor.style.left = '6%'; cursor.style.top = '12%'; place(W.w2, [4, 10, 36, 46]); say('<strong>Drag</strong> toward the left edge…'); }],
+        [2300, () => { ghost.style.opacity = 1; say('…and a <strong>preview</strong> shows where it will land.'); }],
+        [3700, () => { ghost.style.opacity = 0; place(W.w2, [1, 2, 48, 96]); say('<strong>Release,</strong> and it snaps to the left half.'); }],
+        [5600, () => { cursor.style.opacity = 0; }]
+      ]
+    },
+    displays: {
+      caption: '<strong>Display memory:</strong> each display setup keeps its own layout.',
+      period: 8600,
+      reset() {
+        setDual(true); showKeys([]);
+        place(W.w1, [68, 8, 28, 40]); place(W.w2, [68, 52, 28, 40]); place(W.w3, [3, 6, 30, 88]);
+        ghost.style.opacity = 0; cursor.style.opacity = 0;
+      },
+      frames: [
+        [1800, () => { say('<strong>Unplug</strong> the external monitor…'); setDual(false); place(W.w3, [1, 2, 49, 96]); place(W.w1, [52, 2, 47, 47]); place(W.w2, [52, 51, 47, 47]); }],
+        [4800, () => { say('…and <strong>plug it back in.</strong> Every window returns to its spot.'); setDual(true); place(W.w1, [68, 8, 28, 40]); place(W.w2, [68, 52, 28, 40]); place(W.w3, [3, 6, 30, 88]); }]
+      ]
+    },
+    layouts: {
+      caption: LAYOUT_TEXT.coding,
+      manual: true,
+      reset() { setDual(false); showKeys([]); ghost.style.opacity = 0; cursor.style.opacity = 0; applyLayout('coding'); }
     }
-    document.querySelectorAll('#gridTabs span').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        document.querySelectorAll('#gridTabs span').forEach(function (t) { t.classList.remove('on'); });
-        tab.classList.add('on');
-        show(tab.dataset.view);
-      });
-    });
-    show('edge');
-  })();
+  };
+
+  function play(name) {
+    stop();
+    const s = SCENES[name];
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.scene === name));
+    presets.classList.toggle('show', !!s.manual);
+    s.reset();
+    if (s.manual) return;
+    say(s.caption);
+    if (reduce) {
+      // Show the final frame once, no motion.
+      s.frames[s.frames.length - 1][1]();
+      return;
+    }
+    const cycle = () => {
+      s.reset();
+      s.frames.forEach(([ms, fn]) => at(ms, fn));
+      at(s.period, cycle);
+    };
+    cycle();
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => play(tab.dataset.scene));
+  });
+  presets.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => applyLayout(btn.dataset.layout));
+  });
+
+  // Start the first scene when the demo is on screen, so the animation isn't wasted on hidden tabs.
+  let started = false;
+  const io = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !started) { started = true; play('keys'); io.disconnect(); }
+  }, { threshold: 0.35 });
+  io.observe(desk);
+  // Fallback if IntersectionObserver never fires.
+  setTimeout(() => { if (!started) { started = true; play('keys'); } }, 1500);
+})();
 </script>
 </body>
 </html>
