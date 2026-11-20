@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LoomLayout – window manager for macOS</title>
-<meta name="description" content="LoomLayout lives in your menu bar. Snap windows with the keyboard or by dragging, remember each display setup, and save named layouts. Everything stays on your Mac.">
+<meta name="description" content="LoomLayout sits in your menu bar. Snap windows with the keyboard or by dragging, split the screen, remember each display setup, and save named layouts. Everything stays on your Mac.">
 <meta name="theme-color" content="#2e3d4f">
 <link rel="icon" href="assets/app-icon.png" type="image/png">
 <style>
@@ -64,7 +64,7 @@
   }
 
   /* nav */
-  .nav { position: sticky; top: 0; z-index: 30; background: rgba(23,33,44,.72); backdrop-filter: saturate(160%) blur(14px); border-bottom: 1px solid var(--line); }
+  .nav { position: sticky; top: 0; z-index: 90; background: rgba(23,33,44,.72); backdrop-filter: saturate(160%) blur(14px); border-bottom: 1px solid var(--line); }
   .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; letter-spacing: -.01em; }
   .brand img { width: 30px; height: 30px; border-radius: 8px; }
@@ -96,7 +96,7 @@
   .hero-icon img { width: min(230px, 60vw); filter: drop-shadow(0 30px 40px rgba(0,0,0,.45)); }
   @media (max-width: 860px) { .hero-top { grid-template-columns: 1fr; } .hero-icon { justify-content: flex-start; } .hero-icon img { width: 110px; } }
 
-  /* ---------- the "video": a macOS desktop running LoomLayout ---------- */
+  /* ---------- the demo: a macOS desktop running LoomLayout ---------- */
   .video {
     position: relative; margin-top: 40px; border-radius: 22px; padding: 10px;
     background: #0f1620; border: 1px solid rgba(255,255,255,.08);
@@ -112,79 +112,71 @@
 
   .desk {
     position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden;
-    /* wallpaper in the brand's colours: dune sky to teal ground */
     background:
       radial-gradient(90% 70% at 18% 0%, rgba(232,219,199,.95) 0%, rgba(232,219,199,0) 60%),
       radial-gradient(80% 60% at 100% 100%, rgba(46,113,115,.95) 0%, rgba(46,113,115,0) 60%),
       linear-gradient(160deg, #8fb5cf 0%, #5d8ea6 45%, #2e5a6b 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   }
   .menubar {
-    position: absolute; top: 0; left: 0; right: 0; height: 24px; z-index: 40; display: flex; align-items: center;
-    justify-content: space-between; padding: 0 12px; font-size: 12px; color: #1d1d1f;
-    background: rgba(246,246,244,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(0,0,0,.08);
+    position: absolute; top: 0; left: 0; right: 0; height: 26px; z-index: 80; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 10px; font-size: 12.5px; color: #1d1d1f;
+    background: rgba(240,240,242,.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: .5px solid rgba(0,0,0,.12);
   }
   .menubar .l, .menubar .r { display: flex; align-items: center; gap: 14px; }
-  .menubar .apple { font-size: 14px; line-height: 1; }
   .menubar b { font-weight: 650; }
-  .menubar .mark { width: 15px; height: 15px; display: block; }
-  .menubar .mark.on { background: rgba(0,0,0,.08); border-radius: 4px; padding: 2px; box-sizing: content-box; }
-  .menubar .muted { color: rgba(29,29,31,.6); }
-  .dock {
-    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 35; display: flex; gap: 8px;
-    padding: 7px 10px; border-radius: 18px; background: rgba(255,255,255,.28); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,.35);
+  .menubar .muted { color: rgba(29,29,31,.55); }
+  .mk {
+    width: 26px; height: 20px; border-radius: 6px; display: grid; place-items: center; transition: background .15s;
   }
-  .dock i { width: 34px; height: 34px; border-radius: 9px; display: block; }
-  .dock i.ico { background: url("assets/app-icon.png") center/cover; box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
+  .mk.on { background: rgba(0,0,0,.14); }
+  .mk svg { width: 15px; height: 15px; }
 
-  .screen { position: absolute; top: 24px; bottom: 0; transition: width .8s cubic-bezier(.2,.7,.2,1), opacity .6s ease; }
+  .screen { position: absolute; top: 26px; bottom: 0; transition: width .8s cubic-bezier(.2,.7,.2,1), opacity .6s ease; }
   .laptop { left: 0; width: 100%; }
   .external { left: 66%; width: 34%; opacity: 0; border-left: 1px solid rgba(0,0,0,.2); }
   .desk.dual .laptop { width: 62%; }
   .desk.dual .external { opacity: 1; }
 
-  /* macOS windows */
+  /* windows: light macOS style */
   .win {
-    position: absolute; z-index: 3; border-radius: 11px; overflow: hidden; background: #fbfbfc;
-    box-shadow: 0 0 0 .5px rgba(0,0,0,.35), 0 22px 46px -12px rgba(0,0,0,.45);
-    transition: left .9s cubic-bezier(.2,.7,.2,1), top .9s cubic-bezier(.2,.7,.2,1), width .9s cubic-bezier(.2,.7,.2,1), height .9s cubic-bezier(.2,.7,.2,1);
+    position: absolute; z-index: 3; border-radius: 12px; overflow: hidden; background: #fbfbfc;
+    box-shadow: 0 0 0 .5px rgba(0,0,0,.35), 0 22px 46px -14px rgba(0,0,0,.5);
+    transition: left .9s cubic-bezier(.2,.7,.2,1), top .9s cubic-bezier(.2,.7,.2,1), width .9s cubic-bezier(.2,.7,.2,1), height .9s cubic-bezier(.2,.7,.2,1), opacity .4s ease;
   }
   .win .title {
     height: 28px; display: flex; align-items: center; justify-content: center; position: relative;
-    background: linear-gradient(#ececee, #dcdce0); border-bottom: .5px solid rgba(0,0,0,.18);
+    background: linear-gradient(#ededf0, #dcdce0); border-bottom: .5px solid rgba(0,0,0,.18);
     font-size: 11.5px; font-weight: 600; color: #4a4a4f; white-space: nowrap; overflow: hidden;
   }
-  .win .title::before, .win .title::after {
+  .win .title::before {
     content: ""; position: absolute; left: 10px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
-    background: #ff5f57; box-shadow: 18px 0 0 #febc2e, 36px 0 0 #28c840; box-sizing: border-box;
+    background: #ff5f57; box-shadow: 18px 0 0 #febc2e, 36px 0 0 #28c840;
   }
-  .win .title::after { display: none; }
   .win .body { position: absolute; left: 14px; right: 14px; top: 42px; bottom: 14px; }
-  .win .body .ln { height: 6px; border-radius: 3px; background: #d6d9df; margin-bottom: 11px; }
-  .win .body .ln.s { width: 60%; }
-  .win .body .ln.m { width: 82%; }
-  .win .body .ln.a { background: rgba(181,97,59,.45); }
-  .win .body .ln.t { background: rgba(46,113,115,.45); }
-  .win .body .ln.v { background: rgba(143,181,207,.7); }
-  .win .body .ln.g { background: rgba(148,174,143,.7); }
-  .win .body .bar { height: 26px; border-radius: 7px; background: #e9ebef; margin-bottom: 14px; }
-  .win.dim { filter: saturate(.7); }
+  .win .ln { height: 6px; border-radius: 3px; background: #d6d9df; margin-bottom: 11px; }
+  .win .ln.s { width: 60%; }
+  .win .ln.m { width: 82%; }
+  .win .ln.a { background: rgba(181,97,59,.45); }
+  .win .ln.t { background: rgba(46,113,115,.45); }
+  .win .ln.v { background: rgba(143,181,207,.75); }
+  .win .ln.g { background: rgba(148,174,143,.75); }
+  .win .bar { height: 26px; border-radius: 7px; background: #e9ebef; margin-bottom: 14px; }
 
   .ghost {
     position: absolute; z-index: 2; border-radius: 12px; opacity: 0;
     transition: opacity .3s ease, left .3s, top .3s, width .3s, height .3s;
-    background: rgba(10,132,255,.22); border: 2px solid rgba(10,132,255,.85);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.4) inset;
+    background: rgba(10,132,255,.20); border: 2px solid rgba(10,132,255,.85);
   }
   .cursor {
-    position: absolute; z-index: 60; width: 22px; height: 26px; opacity: 0; pointer-events: none;
+    position: absolute; z-index: 95; width: 22px; height: 26px; opacity: 0; pointer-events: none;
     transform: translate(-3px, -3px);
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 26'%3E%3Cpath d='M3 2l0 19 5-5 3.5 7 3.2-1.6-3.5-6.8 7 0z' fill='%23000' stroke='%23fff' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat;
-    transition: left 1.1s ease, top 1.1s ease, opacity .3s;
+    transition: left 1s ease, top 1s ease, opacity .3s;
   }
   .keys {
-    position: absolute; z-index: 55; left: 50%; top: 42px; transform: translateX(-50%);
+    position: absolute; z-index: 85; left: 50%; top: 44px; transform: translateX(-50%);
     display: flex; gap: 6px; align-items: center; padding: 8px 12px; border-radius: 16px;
     background: rgba(30,32,38,.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 12px 30px rgba(0,0,0,.35);
     opacity: 0; transition: opacity .25s ease;
@@ -192,30 +184,110 @@
   .keys.on { opacity: 1; }
   .keys kbd { font-size: 13px; min-width: 2.2em; height: 2.2em; color: #1d1d1f; background: linear-gradient(#fdfdfd, #d9dbe0); border-color: transparent; box-shadow: 0 2px 0 #9ba0a8; }
 
-  /* switcher HUD like the app's alt-tab style switcher */
+  /* switcher HUD */
   .hud {
-    position: absolute; z-index: 58; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0; transition: opacity .25s ease;
+    position: absolute; z-index: 84; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0; transition: opacity .25s ease;
     padding: 14px; border-radius: 22px; display: flex; gap: 10px; background: rgba(28,30,36,.62);
     backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%); box-shadow: 0 24px 60px rgba(0,0,0,.4);
   }
   .hud.on { opacity: 1; }
-  .hud .it { width: 86px; text-align: center; color: #e9e9ec; font-size: 11px; }
+  .hud .it { width: 88px; text-align: center; color: #e9e9ec; font-size: 11px; }
   .hud .it i { display: block; width: 58px; height: 58px; margin: 0 auto 6px; border-radius: 14px; }
-  .hud .it.sel { }
-  .hud .it.sel i { box-shadow: 0 0 0 3px var(--mac-blue); }
-  .hud .it.sel span { background: var(--mac-blue); color: #fff; border-radius: 6px; padding: 1px 6px; }
+  .hud .it span { display: inline-block; border-radius: 6px; padding: 1px 6px; }
+  .hud .it.sel span { background: var(--mac-blue); color: #fff; }
   .hud .i-editor { background: linear-gradient(135deg, #2e7173, #3f9a9c); }
   .hud .i-browser { background: linear-gradient(135deg, #8fb5cf, #5d8ea6); }
   .hud .i-notes { background: linear-gradient(135deg, #94ae8f, #6f8c6a); }
+
+  /* menu bar dropdown, like the real one */
+  .menu {
+    position: absolute; z-index: 88; top: 30px; width: 208px; padding: 6px 0; border-radius: 12px;
+    background: rgba(246,246,248,.94); backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 16px 40px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.22); font-size: 12.5px; color: #1d1d1f;
+    opacity: 0; transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease; pointer-events: none;
+  }
+  .menu.on { opacity: 1; transform: none; }
+  .menu .hd { color: #8e8e93; padding: 4px 14px 5px; font-size: 12px; }
+  .menu .row { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; margin: 0 6px; border-radius: 6px; }
+  .menu .row.hi { background: #3a7ef5; color: #fff; }
+  .menu .row .k { color: #8e8e93; font-size: 11.5px; }
+  .menu .row.hi .k { color: rgba(255,255,255,.85); }
+  .menu .row .chev { color: #8e8e93; font-size: 13px; }
+  .menu .row.hi .chev { color: #fff; }
+  .menu .sep { height: 1px; background: rgba(0,0,0,.12); margin: 5px 12px; }
+  .sub {
+    position: absolute; left: calc(100% - 4px); top: -6px; width: 224px; padding: 6px 0; border-radius: 12px;
+    background: rgba(246,246,248,.94); backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 16px 40px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.22);
+    opacity: 0; pointer-events: none; transition: opacity .15s ease;
+  }
+  .sub.on { opacity: 1; }
+  .sub .row { display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; margin: 0 6px; border-radius: 6px; }
+  .sub .row.hi { background: #3a7ef5; color: #fff; }
+  .sub .ico { display: inline-block; width: 16px; height: 11px; border-radius: 2px; background: #1d1d1f; margin-right: 8px; vertical-align: -1px; }
+  .sub .row.hi .ico { background: #fff; }
+  .sub .k { color: #8e8e93; font-size: 11.5px; }
+  .sub .row.hi .k { color: rgba(255,255,255,.85); }
+
+  /* settings window, like the real one (light) */
+  .settings {
+    position: absolute; z-index: 75; left: 9%; top: 13%; width: 82%; height: 80%; border-radius: 12px; overflow: hidden;
+    background: #f5f5f7; box-shadow: 0 30px 70px rgba(0,0,0,.4), 0 0 0 .5px rgba(0,0,0,.3);
+    display: flex; flex-direction: column;
+    opacity: 0; transform: scale(.98); transition: opacity .3s ease, transform .3s ease; pointer-events: none; color: #1d1d1f;
+  }
+  .settings.on { opacity: 1; transform: none; }
+  .settings .tbar { height: 30px; flex: none; display: flex; align-items: center; position: relative; background: #e8e8ea; border-bottom: .5px solid rgba(0,0,0,.14); }
+  .settings .tbar::before {
+    content: ""; position: absolute; left: 10px; top: 50%; width: 11px; height: 11px; margin-top: -5.5px; border-radius: 50%;
+    background: #ff5f57; box-shadow: 17px 0 0 #febc2e, 34px 0 0 #28c840;
+  }
+  .settings .tbar span { flex: 1; text-align: center; font-size: 12px; font-weight: 600; color: #4a4a4f; }
+  .settings .split { flex: 1; display: grid; grid-template-columns: 27% 1fr; min-height: 0; }
+  .sb { background: #ececee; border-right: .5px solid rgba(0,0,0,.1); padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .sb .it { display: flex; align-items: center; gap: 9px; padding: 6px 9px; border-radius: 8px; font-size: 12.5px; color: #1d1d1f; transition: background .2s; }
+  .sb .it i { width: 15px; height: 15px; border-radius: 4px; border: 1.6px solid #4a4a4f; box-sizing: border-box; flex: none; }
+  .sb .it.on { background: #0a64f0; color: #fff; }
+  .sb .it.on i { border-color: #fff; }
+  .main { padding: 16px 18px; position: relative; overflow: hidden; }
+  .pg { display: none; }
+  .pg.on { display: block; animation: fadeIn .35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .ph { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+  .ph .ico { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg, #5b9ea1, #2e7173); display: grid; place-items: center; }
+  .ph .ico i { width: 18px; height: 18px; border: 2px solid #fff; border-radius: 4px; display: block; box-sizing: border-box; }
+  .ph h4 { margin: 0; font-size: 15px; font-weight: 650; }
+  .ph p { margin: 0; font-size: 11.5px; color: #6e6e73; }
+  .card { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 0 0 .5px rgba(0,0,0,.08); }
+  .row-t { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .row-t b { font-size: 13px; font-weight: 650; }
+  .row-t small { display: block; font-size: 11px; color: #6e6e73; }
+  .tg { width: 38px; height: 22px; border-radius: 11px; background: #d1d1d6; position: relative; transition: background .25s; flex: none; }
+  .tg::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left .25s; }
+  .tg.on { background: #2e7173; }
+  .tg.on::after { left: 18px; }
+  .gp { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; height: 150px; width: 72%; margin: 14px auto 10px; transition: opacity .3s; }
+  .gp.off { opacity: .35; }
+  .gp div { background: #cfdbf0; border-radius: 7px; font-size: 11px; display: grid; place-items: center; color: #1d1d1f; font-weight: 500; }
+  .gp div.e { background: #e3e8f3; color: #8e8e93; }
+  .gp div.hit { background: #7fa6ea; color: #fff; }
+  .grid-note { font-size: 11px; color: #6e6e73; text-align: center; }
+  .lc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .lc-head button { font: inherit; font-size: 11.5px; font-weight: 650; color: #fff; background: linear-gradient(135deg, #2e7173, #3f8f91); border: 0; border-radius: 8px; padding: 6px 12px; cursor: default; transition: transform .15s; }
+  .lc-head button.press { transform: scale(.94); }
+  .lc-title { font-size: 13px; font-weight: 650; }
+  .lc-title small { display: block; font-weight: 400; color: #6e6e73; font-size: 11px; }
+  .lc-mini { display: grid; grid-template-columns: 1.1fr 1fr; gap: 8px; }
+  .lc-mini .scr { background: #dfe8e8; border-radius: 8px; padding: 6px; display: grid; gap: 4px; height: 92px; }
+  .lc-mini .scr div { border-radius: 4px; background: #9cc0bf; font-size: 9px; color: #17212c; display: grid; place-items: center; }
+  .lc-mini .scr div.h { background: #cbd6e8; }
+  .lc-mini .scr div.s { background: #e4d6c2; }
+  .lc-mini .scr div.g { background: #bfd0b8; }
 
   .caption {
     min-height: 52px; margin: 16px 6px 6px; text-align: center; color: var(--mute); font-size: .98rem;
   }
   .caption strong { color: var(--ink); font-weight: 600; }
-  .presets { display: none; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
-  .presets.show { display: flex; }
-  .presets button { font: inherit; font-size: .84rem; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
-  .presets button:hover { border-color: var(--horizon); }
 
   /* sections */
   section { padding: 96px 0 0; }
@@ -289,15 +361,16 @@
   .foot a { color: var(--mute); text-decoration: none; }
   .foot a:hover { color: var(--ink); }
 
-  @media (max-width: 560px) {
+  @media (max-width: 760px) {
     .hero { padding-top: 52px; }
     .video { padding: 6px; border-radius: 16px; }
-    .win .title::before, .win .title::after { transform: scale(.85); }
-    .hud { transform: translate(-50%, -50%) scale(.7); }
-    .dock { display: none; }
+    .menu, .sub { transform-origin: top left; scale: .82; }
+    .settings .split { grid-template-columns: 34% 1fr; }
+    .sb .it { font-size: 11px; }
     .cta { padding: 52px 18px; }
+    .dock-hint { display: none; }
   }
-  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
@@ -324,7 +397,7 @@
       <div>
         <p class="eyebrow">Window manager for macOS</p>
         <h1>Every window,<br><span class="grad">exactly where it belongs.</span></h1>
-        <p class="lead">LoomLayout sits in your menu bar. Snap windows with a keystroke or a drag, remember each display setup, and bring back a named layout in one shortcut.</p>
+        <p class="lead">LoomLayout sits in your menu bar. Snap windows with a keystroke or a drag, split the screen, remember each display setup, and bring back a named layout in one click.</p>
         <div class="actions">
           <a class="btn primary" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download for macOS</a>
           <a class="btn ghost" href="#demo">Watch it work</a>
@@ -340,64 +413,116 @@
     </div>
   </section>
 
-  <!-- VIDEO / DEMO -->
+  <!-- DEMO -->
   <section id="demo" style="padding-top:40px">
     <div class="video" id="video">
       <div class="tabs" role="tablist" aria-label="Demo scenes">
         <button class="tab" role="tab" aria-selected="true" data-scene="keys">Keyboard snap</button>
         <button class="tab" role="tab" aria-selected="false" data-scene="drag">Drag to snap</button>
+        <button class="tab" role="tab" aria-selected="false" data-scene="menu">Menu bar &amp; split</button>
         <button class="tab" role="tab" aria-selected="false" data-scene="switch">Window switcher</button>
         <button class="tab" role="tab" aria-selected="false" data-scene="displays">Display memory</button>
-        <button class="tab" role="tab" aria-selected="false" data-scene="layouts">Named layouts</button>
+        <button class="tab" role="tab" aria-selected="false" data-scene="settings">Settings &amp; layouts</button>
       </div>
 
       <div class="desk" id="desk">
-        <div class="menubar" aria-hidden="true">
+        <div class="menubar">
           <div class="l">
-            <span class="apple"></span>
             <b>Finder</b><span class="muted">File</span><span class="muted">Edit</span><span class="muted">View</span>
           </div>
           <div class="r">
-            <img class="mark on" id="menuMark" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cg stroke='%23000' stroke-width='1.1' stroke-linecap='round' fill='none'%3E%3Cpath d='M3.1 0.5V17.5M6.0 0.5V17.5M11.5 0.5V17.5M14.9 0.5V17.5M0.5 2.7H17.5M0.5 6.5H17.5M0.5 11.9H17.5M0.5 15.9H17.5'/%3E%3C/g%3E%3Ccircle cx='8.7' cy='9.2' r='1.6' fill='%23000'/%3E%3C/svg%3E">
-            <span class="muted" id="clock">Thu 13:02</span>
+            <span class="mk" id="mark" title="LoomLayout">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><g stroke="#1d1d1f" stroke-width="1.15" stroke-linecap="round" fill="none"><path d="M3.1 0.8V17.2M6.0 0.8V17.2M11.5 0.8V17.2M14.9 0.8V17.2M0.8 2.7H17.2M0.8 6.5H17.2M0.8 11.9H17.2M0.8 15.9H17.2"/></g><circle cx="8.7" cy="9.2" r="1.6" fill="#1d1d1f"/></svg>
+            </span>
+            <span class="muted">Fri Nov 20 14:31</span>
           </div>
         </div>
 
         <div class="screen laptop" aria-hidden="true"></div>
         <div class="screen external" aria-hidden="true"></div>
 
-        <div class="win" id="w1" style="left:30%;top:14%;width:46%;height:58%"><div class="title">Browser</div><div class="body">
-          <div class="bar"></div>
-          <div class="ln m"></div><div class="ln v"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div>
+        <div class="win" id="w1"><div class="title">Browser</div><div class="body">
+          <div class="bar"></div><div class="ln m"></div><div class="ln v"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div>
         </div></div>
-        <div class="win" id="w2" style="left:56%;top:30%;width:36%;height:44%"><div class="title">Notes</div><div class="body">
+        <div class="win" id="w2"><div class="title">Notes</div><div class="body">
           <div class="ln g"></div><div class="ln m"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div>
         </div></div>
-        <div class="win" id="w3" style="left:8%;top:18%;width:40%;height:64%"><div class="title">Editor</div><div class="body">
+        <div class="win" id="w3"><div class="title">Editor</div><div class="body">
           <div class="ln t"></div><div class="ln m"></div><div class="ln a"></div><div class="ln s"></div><div class="ln t"></div><div class="ln m"></div><div class="ln s"></div><div class="ln a"></div>
         </div></div>
 
-        <div class="ghost" id="ghost" style="left:0;top:0;width:50%;height:100%"></div>
-        <div class="cursor" id="cursor" style="left:50%;top:50%"></div>
+        <div class="ghost" id="ghost"></div>
 
+        <div class="menu" id="menu">
+          <div class="hd">LoomLayout · Built-in Retina Display</div>
+          <div class="row" id="rowSnap"><span>Snap Window</span><span class="chev">›</span></div>
+          <div class="row" id="rowSplit"><span>Split Screen</span><span class="chev">›</span>
+            <div class="sub" id="sub">
+              <div class="row" id="subSide"><span><i class="ico"></i>2 Side by Side</span><span class="k">⌃⌥⇧H</span></div>
+              <div class="row"><span><i class="ico"></i>2 Stacked</span><span class="k">⌃⌥⇧V</span></div>
+              <div class="row"><span><i class="ico"></i>4 Quarters (2 × 2)</span><span class="k">⌃⌥Q</span></div>
+              <div class="row"><span><i class="ico"></i>No Split</span><span class="k">⌃⌥⇧F</span></div>
+            </div>
+          </div>
+          <div class="row"><span>Layouts</span><span class="chev">›</span></div>
+          <div class="sep"></div>
+          <div class="row"><span>Save Remembered Positions</span><span class="k">⌃⌥S</span></div>
+          <div class="row"><span>Restore Remembered Positions</span><span class="k">⌃⌥R</span></div>
+          <div class="row"><span>Switch Windows…</span><span class="k">⌃⌥⇥</span></div>
+          <div class="sep"></div>
+          <div class="row"><span>Settings…</span><span class="k">⌘,</span></div>
+          <div class="row"><span>Quit LoomLayout</span><span class="k">⌘Q</span></div>
+        </div>
+
+        <div class="settings" id="settings">
+          <div class="tbar"><span>LoomLayout Settings</span></div>
+          <div class="split">
+            <div class="sb">
+              <div class="it" data-page="general"><i></i>General</div>
+              <div class="it" data-page="setup"><i></i>Setup</div>
+              <div class="it" data-page="layouts"><i></i>Layouts</div>
+              <div class="it" data-page="apps"><i></i>Apps</div>
+              <div class="it" data-page="shortcuts"><i></i>Shortcuts</div>
+            </div>
+            <div class="main">
+              <div class="pg" id="pg-setup">
+                <div class="ph"><div class="ico"><i></i></div><div><h4>Setup</h4><p>Split each screen and lock it to a grid.</p></div></div>
+                <div class="card">
+                  <div class="row-t"><div><b>Built-in Retina Display</b><small>1800 × 1169</small></div>
+                    <div style="display:flex;align-items:center;gap:8px"><small style="font-size:11.5px;color:#1d1d1f">Lock to grid</small><span class="tg" id="tg"></span></div></div>
+                  <div class="gp off" id="gp">
+                    <div id="gc0">Finder</div><div class="e" id="gc1">Empty</div><div id="gc2">Brave Browser</div><div id="gc3">Editor</div>
+                  </div>
+                  <div class="grid-note">Grid 2 × 2 · drag a window over the cells you want</div>
+                </div>
+              </div>
+              <div class="pg" id="pg-layouts">
+                <div class="ph"><div class="ico"><i></i></div><div><h4>Layouts</h4><p>Save arrangements and bring them back.</p></div></div>
+                <div class="card">
+                  <div class="lc-head">
+                    <div class="lc-title">Coding <small>3 windows · saved Nov 20 at 14:02</small></div>
+                    <button id="restoreBtn">Restore</button>
+                  </div>
+                  <div class="lc-mini">
+                    <div class="scr"><div class="s" style="grid-row:1/3">Editor</div><div class="h">Browser</div><div class="g">Notes</div></div>
+                    <div class="scr"><div class="h" style="opacity:.5">—</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cursor" id="cursor"></div>
         <div class="keys" id="keys"></div>
         <div class="hud" id="hud">
           <div class="it" data-i="0"><i class="i-browser"></i><span>Browser</span></div>
           <div class="it" data-i="1"><i class="i-notes"></i><span>Notes</span></div>
           <div class="it" data-i="2"><i class="i-editor"></i><span>Editor</span></div>
         </div>
-
-        <div class="dock" aria-hidden="true">
-          <i style="background:#8fb5cf"></i><i style="background:#94ae8f"></i><i class="ico"></i><i style="background:#b5613b"></i>
-        </div>
       </div>
 
       <p class="caption" id="caption"><strong>Keyboard snap:</strong> one shortcut moves the focused window.</p>
-      <div class="presets" id="presets">
-        <button data-layout="coding">Coding</button>
-        <button data-layout="meeting">Meeting</button>
-        <button data-layout="writing">Writing</button>
-      </div>
     </div>
   </section>
 
@@ -624,93 +749,135 @@
   const cursor = document.getElementById('cursor');
   const ghost = document.getElementById('ghost');
   const hud = document.getElementById('hud');
-  const presets = document.getElementById('presets');
+  const menu = document.getElementById('menu');
+  const sub = document.getElementById('sub');
+  const mark = document.getElementById('mark');
+  const settings = document.getElementById('settings');
+  const tg = document.getElementById('tg');
+  const gp = document.getElementById('gp');
+  const restoreBtn = document.getElementById('restoreBtn');
   const W = { w1: document.getElementById('w1'), w2: document.getElementById('w2'), w3: document.getElementById('w3') };
 
-  // rect = [left%, top%, width%, height%] of the desk
+  // ---- one shared grid, so every window edge lines up ----
+  // Regions are [left%, right%, top%, bottom%] of the desk. Gutters are equal on every side.
+  const GX = 0.6, GY = 1.1; // gutter: 0.6% of width, 1.1% of height (about 6-7 px each)
+  const FULL = [0.8, 99.2, 5.6, 99.2];
+  const LAPTOP_DUAL = [0.8, 61, 5.6, 99.2];
+  const EXTERNAL = [66, 99.2, 5.6, 99.2];
+  // cell(region, cols, rows, col, row, spanCols, spanRows) -> [left, top, width, height] in %
+  function cell(reg, cols, rows, c, r, sc, sr) {
+    sc = sc || 1; sr = sr || 1;
+    const cw = (reg[1] - reg[0]) / cols, ch = (reg[3] - reg[2]) / rows;
+    return [reg[0] + c * cw + GX, reg[2] + r * ch + GY, sc * cw - 2 * GX, sr * ch - 2 * GY];
+  }
   function place(el, r) {
     el.style.left = r[0] + '%'; el.style.top = r[1] + '%';
     el.style.width = r[2] + '%'; el.style.height = r[3] + '%';
   }
-  function raise(el) { el.style.zIndex = 4; Object.values(W).forEach(w => { if (w !== el) w.style.zIndex = 3; }); }
   function say(html) { caption.innerHTML = html; }
   function showKeys(list) {
     keys.innerHTML = list.map(k => '<kbd>' + k + '</kbd>').join('');
     keys.classList.toggle('on', list.length > 0);
   }
   function setDual(on) { desk.classList.toggle('dual', on); }
-  function setGhost(r) { place(ghost, r); }
+  function raise(el) { el.style.zIndex = 4; Object.values(W).forEach(w => { if (w !== el) w.style.zIndex = 3; }); }
   function showHud(on, sel) {
     hud.classList.toggle('on', !!on);
-    hud.querySelectorAll('.it').forEach(it => {
-      const selected = Number(it.dataset.i) === sel;
-      it.classList.toggle('sel', selected);
-    });
+    hud.querySelectorAll('.it').forEach(it => it.classList.toggle('sel', Number(it.dataset.i) === sel));
+  }
+  function moveCursor(x, y) { cursor.style.left = x + '%'; cursor.style.top = y + '%'; }
+  function showCursor(on) { cursor.style.opacity = on ? 1 : 0; }
+  function setMenu(on) {
+    menu.classList.toggle('on', !!on); mark.classList.toggle('on', !!on);
+    if (!on) sub.classList.remove('on');
+  }
+  function setSettings(on) { settings.classList.toggle('on', !!on); }
+  function settingsPage(name) {
+    settings.querySelectorAll('.sb .it').forEach(it => it.classList.toggle('on', it.dataset.page === name));
+    document.querySelectorAll('.pg').forEach(p => p.classList.toggle('on', p.id === 'pg-' + name));
+  }
+  function positionMenu() {
+    // Centre the dropdown under the LoomLayout icon.
+    const d = desk.getBoundingClientRect(), m = mark.getBoundingClientRect();
+    const centre = m.left + m.width / 2 - d.left;
+    menu.style.left = Math.max(6, centre - 104) + 'px';
+  }
+  // Positions of the mark and menu rows, as % of the desk, for the cursor.
+  function pct(el) {
+    const d = desk.getBoundingClientRect(), r = el.getBoundingClientRect();
+    return { x: ((r.left + r.width / 2 - d.left) / d.width) * 100, y: ((r.top + r.height / 2 - d.top) / d.height) * 100 };
   }
 
   let timers = [];
   function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
   function stop() { timers.forEach(clearTimeout); timers = []; }
 
-  const LAYOUTS = {
-    coding:  { w3: [1, 2, 60, 96], w1: [63, 2, 36, 47], w2: [63, 51, 36, 47] },
-    meeting: { w1: [1, 2, 70, 96], w2: [73, 2, 26, 47], w3: [73, 51, 26, 47] },
-    writing: { w2: [1, 2, 64, 96], w1: [67, 2, 32, 46], w3: [67, 50, 32, 48] }
-  };
-  const LAYOUT_TEXT = {
-    coding: '<strong>Coding layout:</strong> editor on the left, browser and notes stacked on the right.',
-    meeting: '<strong>Meeting layout:</strong> the browser takes most of the screen, notes and editor sit beside it.',
-    writing: '<strong>Writing layout:</strong> notes take the left side, browser and editor stack on the right.'
-  };
-  function applyLayout(name) {
-    const L = LAYOUTS[name];
-    Object.keys(L).forEach(id => place(W[id], L[id]));
-    say(LAYOUT_TEXT[name]);
-  }
-
   const SCENES = {
     keys: {
       caption: '<strong>Keyboard snap:</strong> one shortcut moves the focused window.',
       period: 8200,
       reset() {
-        setDual(false); showKeys([]); showHud(false, -1);
-        place(W.w1, [30, 14, 46, 58]); place(W.w2, [56, 30, 36, 44]); place(W.w3, [8, 18, 40, 64]);
-        raise(W.w1); ghost.style.opacity = 0; cursor.style.opacity = 0;
+        setDual(false); showKeys([]); showHud(false, -1); setMenu(false); setSettings(false);
+        place(W.w1, [22, 16, 44, 58]); place(W.w2, cell(FULL, 2, 2, 1, 1)); place(W.w3, cell(FULL, 2, 2, 1, 0));
+        raise(W.w1); ghost.style.opacity = 0; showCursor(false);
       },
       frames: [
-        [400,  () => { showKeys(['⌃', '⌥', '←']); place(W.w1, [1, 2, 48, 96]); say('<strong>Left half.</strong> One shortcut, no dragging.'); }],
-        [2400, () => { showKeys(['⌃', '⌥', '→']); place(W.w1, [51, 2, 48, 96]); say('<strong>Right half.</strong> The same window, moved across.'); }],
-        [4400, () => { showKeys(['⌃', '⌥', '↩']); place(W.w1, [1, 2, 98, 96]); say('<strong>Maximize.</strong> Back to full screen when you need it.'); }],
-        [6400, () => { showKeys(['⌃', '⌥', 'C']); place(W.w1, [28, 22, 44, 56]); say('<strong>Center.</strong> Keeps the size, moves to the middle.'); }]
+        [400,  () => { showKeys(['⌃', '⌥', '←']); place(W.w1, cell(FULL, 2, 1, 0, 0)); say('<strong>Left half.</strong> One shortcut, no dragging.'); }],
+        [2400, () => { showKeys(['⌃', '⌥', '→']); place(W.w1, cell(FULL, 2, 1, 1, 0)); say('<strong>Right half.</strong> The same window, moved across.'); }],
+        [4400, () => { showKeys(['⌃', '⌥', '↩']); place(W.w1, cell(FULL, 1, 1, 0, 0)); say('<strong>Maximize.</strong> Back to full screen when you need it.'); }],
+        [6400, () => { showKeys(['⌃', '⌥', 'C']); place(W.w1, [28, 20, 44, 58]); say('<strong>Center.</strong> Keeps the size, moves to the middle.'); }]
       ]
     },
     drag: {
       caption: '<strong>Drag to snap:</strong> grab a window by its title bar.',
       period: 7600,
       reset() {
-        setDual(false); showKeys([]); showHud(false, -1);
-        place(W.w1, [30, 14, 46, 58]); place(W.w2, [56, 30, 36, 44]); place(W.w3, [40, 50, 40, 44]);
+        setDual(false); showKeys([]); showHud(false, -1); setMenu(false); setSettings(false);
+        place(W.w1, cell(FULL, 2, 2, 1, 0)); place(W.w2, cell(FULL, 2, 2, 1, 1)); place(W.w3, [40, 44, 40, 44]);
         raise(W.w3);
-        setGhost([0, 0, 50, 100]); ghost.style.opacity = 0;
-        cursor.style.transition = 'none'; cursor.style.left = '60%'; cursor.style.top = '60%'; cursor.style.opacity = 0;
+        place(ghost, cell(FULL, 2, 1, 0, 0)); ghost.style.opacity = 0;
+        cursor.style.transition = 'none'; moveCursor(60, 60); showCursor(false);
         void cursor.offsetWidth; cursor.style.transition = '';
       },
       frames: [
-        [400,  () => { cursor.style.opacity = 1; say('<strong>Grab</strong> a window by its title bar.'); }],
-        [900,  () => { cursor.style.left = '48%'; cursor.style.top = '51%'; say('<strong>Drag</strong> toward the left edge…'); }],
-        [1500, () => { cursor.style.left = '6%'; cursor.style.top = '10%'; place(W.w3, [4, 6, 40, 64]); }],
-        [2600, () => { ghost.style.opacity = 1; say('…and a <strong>preview</strong> shows where it will land.'); }],
-        [3900, () => { ghost.style.opacity = 0; place(W.w3, [1, 2, 48, 96]); say('<strong>Release,</strong> and it snaps to the left half.'); }],
-        [5800, () => { cursor.style.opacity = 0; }]
+        [400,  () => { showCursor(true); say('<strong>Grab</strong> a window by its title bar.'); }],
+        [900,  () => { moveCursor(48, 50); say('<strong>Drag</strong> toward the left edge…'); }],
+        [1700, () => { moveCursor(6, 12); place(W.w3, [4, 8, 40, 44]); }],
+        [2700, () => { ghost.style.opacity = 1; say('…and a <strong>preview</strong> shows where it will land.'); }],
+        [4000, () => { ghost.style.opacity = 0; place(W.w3, cell(FULL, 2, 1, 0, 0)); say('<strong>Release,</strong> and it snaps to the left half.'); }],
+        [5800, () => { showCursor(false); }]
+      ]
+    },
+    menu: {
+      caption: '<strong>From the menu bar:</strong> open LoomLayout and choose a split.',
+      period: 8000,
+      reset() {
+        setDual(false); showKeys([]); showHud(false, -1); setSettings(false); setMenu(false);
+        raise(W.w3); ghost.style.opacity = 0;
+        place(W.w1, [14, 18, 56, 66]); place(W.w2, cell(FULL, 2, 2, 1, 1)); place(W.w3, cell(FULL, 2, 2, 1, 0));
+        W.w2.style.opacity = 1;
+        cursor.style.transition = 'none'; moveCursor(50, 40); showCursor(false);
+        void cursor.offsetWidth; cursor.style.transition = '';
+        positionMenu(); sub.classList.remove('on');
+      },
+      frames: [
+        [400,  () => { showCursor(true); const p = pct(mark); moveCursor(p.x, p.y); }],
+        [1500, () => { setMenu(true); positionMenu(); say('<strong>Click</strong> the LoomLayout icon in the menu bar.'); }],
+        [2400, () => { const p = pct(document.getElementById('rowSplit')); moveCursor(p.x, p.y); }],
+        [3100, () => { sub.classList.add('on'); say('<strong>Split Screen</strong> lists the options.'); }],
+        [4300, () => { const p = pct(document.getElementById('subSide')); moveCursor(p.x, p.y); }],
+        [5000, () => { sub.classList.remove('on'); setMenu(false); place(W.w1, cell(FULL, 2, 1, 0, 0)); place(W.w3, cell(FULL, 2, 1, 1, 0)); W.w2.style.opacity = 0; say('<strong>2 Side by Side.</strong> Two windows, one click.'); }],
+        [6900, () => { showCursor(false); }]
       ]
     },
     switch: {
       caption: '<strong>Window switcher:</strong> hold ⌃⌥ and tap Tab, most recently used first.',
       period: 7000,
       reset() {
-        setDual(false); showKeys([]); showHud(false, -1);
-        place(W.w1, [30, 14, 46, 58]); place(W.w2, [56, 30, 36, 44]); place(W.w3, [8, 18, 40, 64]);
-        raise(W.w1); ghost.style.opacity = 0; cursor.style.opacity = 0;
+        setDual(false); showKeys([]); showHud(false, -1); setMenu(false); setSettings(false);
+        place(W.w1, cell(FULL, 2, 2, 0, 0, 1, 2)); place(W.w2, cell(FULL, 2, 2, 1, 0)); place(W.w3, cell(FULL, 2, 2, 1, 1));
+        W.w2.style.opacity = 1;
+        raise(W.w1); ghost.style.opacity = 0; showCursor(false);
       },
       frames: [
         [400,  () => { showKeys(['⌃', '⌥', 'Tab']); showHud(true, 0); }],
@@ -723,19 +890,38 @@
       caption: '<strong>Display memory:</strong> each display setup keeps its own layout.',
       period: 8600,
       reset() {
-        setDual(true); showKeys([]); showHud(false, -1);
-        place(W.w1, [68, 8, 28, 40]); place(W.w2, [68, 52, 28, 40]); place(W.w3, [3, 6, 30, 88]);
-        ghost.style.opacity = 0; cursor.style.opacity = 0;
+        setDual(true); showKeys([]); showHud(false, -1); setMenu(false); setSettings(false);
+        place(W.w1, cell(EXTERNAL, 1, 2, 0, 0)); place(W.w2, cell(EXTERNAL, 1, 2, 0, 1)); place(W.w3, cell(LAPTOP_DUAL, 2, 1, 0, 0));
+        W.w2.style.opacity = 1; ghost.style.opacity = 0; showCursor(false);
       },
       frames: [
-        [1800, () => { say('<strong>Unplug</strong> the external monitor…'); setDual(false); place(W.w3, [1, 2, 49, 96]); place(W.w1, [52, 2, 47, 47]); place(W.w2, [52, 51, 47, 47]); }],
-        [4800, () => { say('…and <strong>plug it back in.</strong> Every window returns to its spot.'); setDual(true); place(W.w1, [68, 8, 28, 40]); place(W.w2, [68, 52, 28, 40]); place(W.w3, [3, 6, 30, 88]); }]
+        [1800, () => { say('<strong>Unplug</strong> the external monitor…'); setDual(false); place(W.w3, cell(FULL, 2, 1, 0, 0)); place(W.w1, cell(FULL, 2, 2, 1, 0)); place(W.w2, cell(FULL, 2, 2, 1, 1)); }],
+        [4800, () => { say('…and <strong>plug it back in.</strong> Every window returns to its spot.'); setDual(true); place(W.w1, cell(EXTERNAL, 1, 2, 0, 0)); place(W.w2, cell(EXTERNAL, 1, 2, 0, 1)); place(W.w3, cell(LAPTOP_DUAL, 2, 1, 0, 0)); }]
       ]
     },
-    layouts: {
-      caption: LAYOUT_TEXT.coding,
-      manual: true,
-      reset() { setDual(false); showKeys([]); showHud(false, -1); ghost.style.opacity = 0; cursor.style.opacity = 0; applyLayout('coding'); }
+    settings: {
+      caption: '<strong>Settings:</strong> lock a screen to a grid, then restore a saved layout.',
+      period: 9800,
+      reset() {
+        setDual(false); showKeys([]); showHud(false, -1); setMenu(false);
+        place(W.w1, cell(FULL, 2, 1, 0, 0)); place(W.w3, cell(FULL, 2, 1, 1, 0)); W.w2.style.opacity = 0;
+        raise(W.w3); ghost.style.opacity = 0;
+        setSettings(false); tg.classList.remove('on'); gp.classList.add('off');
+        [...gp.children].forEach(c => c.classList.remove('hit'));
+        restoreBtn.classList.remove('press'); settingsPage('setup');
+        cursor.style.transition = 'none'; moveCursor(50, 50); showCursor(false);
+        void cursor.offsetWidth; cursor.style.transition = '';
+      },
+      frames: [
+        [400,  () => { setSettings(true); showCursor(true); moveCursor(50, 50); say('<strong>Settings → Setup.</strong> Pick a screen and lock it to a grid.'); }],
+        [1600, () => { const p = pct(tg); moveCursor(p.x, p.y); }],
+        [2300, () => { tg.classList.add('on'); gp.classList.remove('off'); say('<strong>Lock to grid:</strong> dragging fills the cells you pass over.'); }],
+        [3300, () => { gp.children[2].classList.add('hit'); gp.children[3].classList.add('hit'); }],
+        [4300, () => { [...gp.children].forEach(c => c.classList.remove('hit')); settingsPage('layouts'); say('<strong>Layouts</strong> keeps every saved arrangement.'); moveCursor(72, 40); }],
+        [5600, () => { const p = pct(restoreBtn); moveCursor(p.x, p.y); }],
+        [6400, () => { restoreBtn.classList.add('press'); }],
+        [6700, () => { restoreBtn.classList.remove('press'); setSettings(false); showCursor(false); place(W.w3, cell(FULL, 3, 2, 0, 0, 2, 2)); place(W.w1, cell(FULL, 3, 2, 2, 0)); W.w2.style.opacity = 1; place(W.w2, cell(FULL, 3, 2, 2, 1)); say('<strong>Restore.</strong> Coding layout is back, in place.'); }]
+      ]
     }
   };
 
@@ -743,9 +929,7 @@
     stop();
     const s = SCENES[name];
     document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.scene === name));
-    presets.classList.toggle('show', !!s.manual);
     s.reset();
-    if (s.manual) return;
     say(s.caption);
     if (reduce) { s.frames[s.frames.length - 1][1](); return; }
     const cycle = () => {
@@ -757,11 +941,12 @@
   }
 
   document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => play(tab.dataset.scene)));
-  presets.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => applyLayout(btn.dataset.layout)));
+  settings.querySelectorAll('.sb .it').forEach(it => it.addEventListener('click', () => settingsPage(it.dataset.page)));
+  window.addEventListener('resize', positionMenu);
 
-  // Start when the video is on screen; a timer covers browsers without IntersectionObserver.
+  // Start when the demo is on screen; the timer covers browsers without IntersectionObserver.
   let started = false;
-  function go() { if (!started) { started = true; play('keys'); } }
+  function go() { if (!started) { started = true; positionMenu(); play('keys'); } }
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver(entries => { if (entries[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: 0.3 });
     io.observe(desk);
