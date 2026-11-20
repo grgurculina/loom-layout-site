@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoomLayout – window manager for macOS</title>
+<meta name="description" content="LoomLayout is a macOS menu-bar window manager: keyboard snapping, drag-to-grid, saved layouts and an alt-tab style switcher.">
+<style>
+  :root {
+    --bg: #f7f7f5; --fg: #1d1d1f; --muted: #6e6e73; --card: #ffffff;
+    --accent: #3b5bdb; --accent-fg: #ffffff; --border: #e5e5ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111114; --fg: #f5f5f7; --muted: #a1a1a6; --card: #1c1c20;
+      --accent: #748ffc; --accent-fg: #0b0b0f; --border: #2c2c31;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111114; --fg: #f5f5f7; --muted: #a1a1a6; --card: #1c1c20;
+    --accent: #748ffc; --accent-fg: #0b0b0f; --border: #2c2c31;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 56px 16px 48px; }
+  h1 { font-size: clamp(2rem, 6vw, 3rem); margin: 0 0 12px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.35rem; margin: 40px 0 12px; }
+  p.lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 28px; }
+  .btn {
+    display: inline-block; background: var(--accent); color: var(--accent-fg);
+    text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 12px;
+  }
+  .note { color: var(--muted); font-size: 0.92rem; margin-top: 12px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 1rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  ol { padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  code { background: var(--card); border: 1px solid var(--border); padding: 1px 6px; border-radius: 6px; font-size: 0.9em; }
+  footer { color: var(--muted); font-size: 0.85rem; margin-top: 56px; border-top: 1px solid var(--border); padding-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LoomLayout</h1>
+  <p class="lead">A window manager for macOS that lives in your menu bar. Snap windows with the keyboard, drag them onto a grid, save layouts and switch windows quickly.</p>
+
+  <a class="btn" href="https://github.com/grgurculina/loom-layout-site/releases/latest/download/LoomLayout-1.0.0.dmg">Download for macOS</a>
+  <p class="note">Version 1.0.0 · macOS 13 (Ventura) or later · .dmg file</p>
+
+  <h2>Features</h2>
+  <div class="grid">
+    <div class="card"><h3>Keyboard snapping</h3><p>Halves, quarters, thirds, maximize, center, and back to the previous size.</p></div>
+    <div class="card"><h3>Drag to snap</h3><p>Drag a window to an edge, a corner, or a grid locked to a screen.</p></div>
+    <div class="card"><h3>Split screens</h3><p>Split a screen into 2 or 4 parts and remember which window sits where.</p></div>
+    <div class="card"><h3>Saved layouts</h3><p>Save a layout under a name and restore it from the menu or when displays reconnect.</p></div>
+    <div class="card"><h3>Window switcher</h3><p>An alt-tab style switcher, most recently used first.</p></div>
+    <div class="card"><h3>Custom shortcuts</h3><p>Change any shortcut in Settings. Nothing is hard-coded.</p></div>
+  </div>
+
+  <h2>Install</h2>
+  <ol>
+    <li>Download <code>LoomLayout-1.0.0.dmg</code> and open it.</li>
+    <li>Drag <strong>LoomLayout</strong> into <strong>Applications</strong>.</li>
+    <li>Open LoomLayout. The first time, right-click the app and choose <strong>Open</strong> if macOS blocks it.</li>
+    <li>Grant Accessibility access under <em>System Settings → Privacy &amp; Security → Accessibility</em>, then quit and reopen LoomLayout.</li>
+  </ol>
+  <p class="note">LoomLayout needs Accessibility access to move other apps' windows. It requests nothing else.</p>
+
+  <footer>© LoomLayout · <a href="https://github.com/grgurculina/loom-layout-site" style="color:inherit">Source of this page</a></footer>
+</main>
+</body>
+</html>
